@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" width="1920" height="1200" role="img" aria-label="Placeholder hero image: Rick Duncan performing on Technics turntables">
+  <rect width="1920" height="1200" fill="#131315"/>
+  <rect x="0.5" y="0.5" width="1919" height="1199" fill="none" stroke="#2a2a2d" stroke-width="1"/>
+  <line x1="0" y1="1200" x2="1920" y2="0" stroke="#2a2a2d" stroke-width="1"/>
+  <rect x="920.0" y="515.0" width="80" height="6" fill="#ee4236"/>
+  <text x="960.0" y="612.75" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="85" font-weight="700" letter-spacing="2" text-anchor="middle">HERO — LIVE AT THE DECKS</text>
+  <text x="960.0" y="668.75" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="42" letter-spacing="1" text-anchor="middle">REPLACE: photo of Rick Duncan actively mixing on Technics turntables</text>
+</svg>

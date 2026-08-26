@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Accessibility — Rick Duncan / Just:DJ</title>
+  <meta name="description" content="Accessibility statement for the Rick Duncan / Just:DJ website." />
+  <link rel="canonical" href="https://www.example.com/accessibility.html" /><!-- PLACEHOLDER -->
+  <meta name="robots" content="noindex, follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Just:DJ — Rick Duncan" />
+  <meta property="og:title" content="Accessibility — Rick Duncan / Just:DJ" />
+  <meta property="og:description" content="Accessibility statement for the Rick Duncan / Just:DJ website." />
+  <meta property="og:url" content="https://www.example.com/accessibility.html" /><!-- PLACEHOLDER -->
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" /><!-- PLACEHOLDER -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0b0b0c" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/index.html" class="logo" aria-label="Just:DJ — Rick Duncan, home">
+        JUST<span class="logo-accent">:</span>DJ
+      </a>
+      <details class="nav-disclosure">
+        <summary class="nav-toggle" aria-label="Open menu">
+          <span class="nav-toggle-bars" aria-hidden="true"></span>
+          <span>Menu</span>
+        </summary>
+        <nav class="site-nav" aria-label="Primary">
+          <ul>
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/watch.html">Watch</a></li>
+            <li><a href="/about.html">Just:DJ</a></li>
+            <li><a href="/shows.html">Shows</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+        </nav>
+      </details>
+      <a class="btn btn-book" href="/contact.html">Book / Contact</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="section" style="border-top:none;padding-top:var(--space-5)">
+      <div class="container flow" style="max-width:60rem">
+        <p class="section-label">Accessibility</p>
+        <h1 class="h1-page">Accessibility</h1>
+        <p>
+          This site is built with the intent to meet WCAG 2.2 Level AA
+          wherever practical. That includes semantic HTML5, a logical
+          heading structure, a skip-to-content link, visible keyboard focus
+          states, sufficient colour contrast, descriptive alt text, an
+          accessible no-JavaScript navigation menu, and support for
+          reduced-motion preferences.
+        </p>
+        <h2>Ongoing commitment</h2>
+        <p>
+          Accessibility is an ongoing effort rather than a one-time
+          checklist. As content and pages are added, they are built to the
+          same standard as the rest of the site.
+        </p>
+        <h2>Known limitations</h2>
+        <p>
+          Some imagery on this site is currently placeholder artwork rather
+          than final photography; alt text describes the intended final
+          image. This will be reviewed again once real assets are added.
+        </p>
+        <h2>Reporting an issue</h2>
+        <p>
+          If you encounter an accessibility barrier anywhere on this site,
+          please get in touch at
+          <a class="text-link" href="mailto:bookings@example.com">bookings@[DOMAIN].com</a><!-- PLACEHOLDER -->
+          describing the page and the issue, so it can be fixed.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <p class="footer-brand">JUST<span class="logo-accent">:</span>DJ</p>
+        <p class="muted">Rick Duncan</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer">
+        <p class="footer-heading">Navigate</p>
+        <ul>
+          <li><a href="/index.html">Home</a></li>
+          <li><a href="/watch.html">Watch</a></li>
+          <li><a href="/about.html">Just:DJ</a></li>
+          <li><a href="/shows.html">Shows</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <div class="footer-social">
+        <p class="footer-heading">Follow</p>
+        <ul>
+          <li><a href="#">TikTok</a></li>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">YouTube</a></li>
+          <li><a href="#">Mixcloud</a></li>
+          <li><a href="#">Facebook</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> Just:DJ / Rick Duncan. All rights reserved.</p>
+      <ul class="footer-legal">
+        <li><a href="/privacy.html">Privacy</a></li>
+        <li><a href="/accessibility.html">Accessibility</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="/js/main.js" defer></script>
+</body>
+</html>

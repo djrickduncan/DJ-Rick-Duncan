@@ -1,0 +1,7 @@
+# Rick Duncan / Just:DJ — robots.txt
+# PLACEHOLDER: update the Sitemap line with the real production domain.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://www.example.com/sitemap.xml
