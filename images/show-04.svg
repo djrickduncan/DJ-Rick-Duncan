@@ -2,7 +2,7 @@
   <rect width="1200" height="1200" fill="#131315"/>
   <rect x="0.5" y="0.5" width="1199" height="1199" fill="none" stroke="#2a2a2d" stroke-width="1"/>
   <line x1="0" y1="1200" x2="1200" y2="0" stroke="#2a2a2d" stroke-width="1"/>
-  <rect x="560.0" y="515.0" width="80" height="6" fill="#ee4236"/>
-  <text x="600.0" y="612.75" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="85" font-weight="700" letter-spacing="2" text-anchor="middle">FOUR FOUR</text>
-  <text x="600.0" y="668.75" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="42" letter-spacing="1" text-anchor="middle">PLACEHOLDER ARTWORK — replace with existing show artwork</text>
+  <rect x="560.0" y="556.0" width="80" height="6" fill="#ee4236"/>
+  <text x="600.0" y="606.6" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700" letter-spacing="2" text-anchor="middle">FOUR FOUR</text>
+  <text x="600.0" y="642.6" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="22" letter-spacing="1" text-anchor="middle">PLACEHOLDER ARTWORK — replace with existing show artwork</text>
 </svg>

@@ -2,7 +2,7 @@
   <rect width="1920" height="1080" fill="#131315"/>
   <rect x="0.5" y="0.5" width="1919" height="1079" fill="none" stroke="#2a2a2d" stroke-width="1"/>
   <line x1="0" y1="1080" x2="1920" y2="0" stroke="#2a2a2d" stroke-width="1"/>
-  <rect x="920.0" y="463.0" width="80" height="6" fill="#ee4236"/>
-  <text x="960.0" y="551.55" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="77" font-weight="700" letter-spacing="2" text-anchor="middle">SHOWREEL POSTER</text>
-  <text x="960.0" y="603.55" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="38" letter-spacing="1" text-anchor="middle">REPLACE: video poster frame, 1920x1080</text>
+  <rect x="920.0" y="496.0" width="80" height="6" fill="#ee4236"/>
+  <text x="960.0" y="546.6" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700" letter-spacing="2" text-anchor="middle">SHOWREEL POSTER</text>
+  <text x="960.0" y="582.6" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="22" letter-spacing="1" text-anchor="middle">REPLACE: video poster frame, 1920x1080</text>
 </svg>

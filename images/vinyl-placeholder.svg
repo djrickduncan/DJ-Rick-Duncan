@@ -2,7 +2,7 @@
   <rect width="1600" height="1000" fill="#131315"/>
   <rect x="0.5" y="0.5" width="1599" height="999" fill="none" stroke="#2a2a2d" stroke-width="1"/>
   <line x1="0" y1="1000" x2="1600" y2="0" stroke="#2a2a2d" stroke-width="1"/>
-  <rect x="760.0" y="429.0" width="80" height="6" fill="#ee4236"/>
-  <text x="800.0" y="510.65" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="71" font-weight="700" letter-spacing="2" text-anchor="middle">TURNTABLES + DVS</text>
-  <text x="800.0" y="559.65" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="35" letter-spacing="1" text-anchor="middle">REPLACE: close-up of Technics turntables and control vinyl</text>
+  <rect x="760.0" y="456.0" width="80" height="6" fill="#ee4236"/>
+  <text x="800.0" y="506.6" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700" letter-spacing="2" text-anchor="middle">TURNTABLES + DVS</text>
+  <text x="800.0" y="542.6" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="22" letter-spacing="1" text-anchor="middle">REPLACE: close-up of Technics turntables and control vinyl</text>
 </svg>

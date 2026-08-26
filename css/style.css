@@ -1,51 +1,52 @@
 /* ==========================================================================
    RICK DUNCAN / JUST:DJ — MAIN STYLESHEET
-   One file, no framework. Organised top to bottom:
+   Editorial EPK design system. One file, no framework. Organised:
    1. Custom properties (palette / type / spacing)
    2. Reset & base elements
-   3. Layout helpers (container, grid, section)
-   4. Typography utilities
-   5. Buttons & links
-   6. Header & navigation (no-JS accessible disclosure nav)
+   3. Layout primitives (container, section, split, stack)
+   4. Editorial typography (kicker, display sizes, section numbering)
+   5. Buttons, tags, links
+   6. Header & navigation (fixed, transparent-over-hero, no-JS disclosure)
    7. Hero
-   8. Section-specific components
-   9. Cards (performance / show / metric / capability)
+   8. Tiles (performance / show artwork) & gallery scroll
+   9. Spec rows (broadcast capabilities) & metric cards
    10. Forms
    11. Footer
    12. Media / aspect-ratio helpers
-   13. Utilities & accessibility
-   14. Responsive breakpoints
+   13. Reveal-on-scroll + reduced motion
+   14. Utilities & accessibility
    ========================================================================== */
 
 /* ---------- 1. Custom properties --------------------------------------- */
 :root {
   /* Palette — Just:DJ brand */
-  --color-bg: #0b0b0c;
+  --color-bg: #0a0a0b;
   --color-bg-alt: #131315;
-  --color-bg-raised: #1a1a1d;
+  --color-bg-raised: #19191c;
   --color-text: #f5f4f2;
   --color-text-dim: #cfcdc9;
   --color-muted: #8c8b8a;
   --color-accent: #ee4236;
   --color-accent-dim: #b6291f;
-  --color-border: #2a2a2d;
+  --color-border: #262628;
   --color-border-strong: #6b6b70;
   --color-focus: #ffffff;
 
-  /* Type */
+  /* Type — system stack tuned for a bold editorial headline weight */
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial,
+    "Segoe UI", Roboto, sans-serif;
   --font-mono:
     ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
 
-  --step--1: clamp(0.8rem, 0.78rem + 0.1vw, 0.875rem);
+  --step--1: clamp(0.78rem, 0.75rem + 0.15vw, 0.875rem);
   --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
-  --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
-  --step-2: clamp(1.6rem, 1.4rem + 1vw, 2.1rem);
-  --step-3: clamp(2rem, 1.6rem + 2vw, 3rem);
-  --step-4: clamp(2.6rem, 1.9rem + 3.2vw, 4.5rem);
-  --step-5: clamp(3.2rem, 2.1rem + 5vw, 6.5rem);
+  --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.6rem);
+  --step-2: clamp(1.7rem, 1.4rem + 1.4vw, 2.4rem);
+  --step-3: clamp(2.2rem, 1.6rem + 2.6vw, 3.4rem);
+  --step-4: clamp(2.8rem, 1.7rem + 4.5vw, 5.2rem);
+  --step-5: clamp(3.4rem, 1.6rem + 7vw, 7.5rem);
+  --step-6: clamp(4rem, 1.4rem + 10vw, 10rem);
 
   /* Spacing scale */
   --space-1: 0.5rem;
@@ -57,16 +58,19 @@
   --space-7: 9rem;
 
   /* Layout */
-  --container-width: 1200px;
-  --container-pad: clamp(1.25rem, 4vw, 2.5rem);
+  --container-width: 1320px;
+  --container-pad: clamp(1.25rem, 4vw, 3rem);
   --radius: 2px;
   --border-thin: 1px solid var(--color-border);
-  --transition: 160ms ease;
+  --header-h: 76px;
+  --transition: 200ms ease;
+  --transition-fast: 120ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --transition: 0ms;
+    --transition-fast: 0ms;
   }
 }
 
@@ -123,11 +127,17 @@ h2,
 h3,
 h4 {
   font-family: var(--font-sans);
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  line-height: 0.98;
+  font-weight: 900;
+  letter-spacing: -0.03em;
   margin: 0 0 var(--space-2);
   text-wrap: balance;
+}
+
+h3,
+h4 {
+  letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
 p {
@@ -148,7 +158,11 @@ button {
   font: inherit;
 }
 
-/* ---------- 3. Layout helpers -------------------------------------------- */
+#main {
+  scroll-margin-top: 90px;
+}
+
+/* ---------- 3. Layout primitives ----------------------------------------- */
 .container {
   width: 100%;
   max-width: var(--container-width);
@@ -165,19 +179,48 @@ button {
   border-top: none;
 }
 
+.section-tight {
+  padding-block: var(--space-5);
+}
+
+.page-head {
+  padding-top: calc(var(--header-h) + var(--space-4));
+  padding-bottom: var(--space-4);
+  border-top: none;
+}
+
 .section-head {
   max-width: 46rem;
   margin-bottom: var(--space-4);
 }
 
-.section-label {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  margin-bottom: var(--space-2);
+/* Asymmetric split layouts — the primary editorial rhythm device */
+.split {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 860px) {
+  .split {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+    align-items: center;
+  }
+  .split-60-40 {
+    grid-template-columns: 3fr 2fr;
+  }
+  .split-40-60 {
+    grid-template-columns: 2fr 3fr;
+  }
+  .split-65-35 {
+    grid-template-columns: 13fr 7fr;
+  }
+  .split-rev > :first-child {
+    order: 2;
+  }
+  .split-top {
+    align-items: start;
+  }
 }
 
 .grid {
@@ -189,63 +232,66 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
-.grid-2 {
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 768px) {
-  .grid-2 {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-5);
-    align-items: center;
-  }
-}
-
 .grid-5 {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.tiles {
-  grid-template-columns: repeat(2, 1fr);
+.flow > * + * {
+  margin-top: var(--space-2);
 }
 
-@media (min-width: 560px) {
-  .tiles {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .tiles {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* ---------- 4. Typography utilities -------------------------------------- */
-.h1-hero {
-  font-size: var(--step-5);
-}
-
-.h1-page {
-  font-size: var(--step-4);
-}
-
-.h2-huge {
-  font-size: var(--step-4);
-}
-
-.eyebrow {
+/* ---------- 4. Editorial typography --------------------------------------- */
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
   font-family: var(--font-mono);
   font-size: var(--step--1);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-dim);
+  margin-bottom: var(--space-2);
+}
+
+.kicker::before {
+  content: "";
+  display: inline-block;
+  width: 1.6em;
+  height: 2px;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.kicker-accent {
+  color: var(--color-accent);
+}
+
+.section-num {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.display-1 {
+  font-size: var(--step-6);
+}
+
+.display-2 {
+  font-size: var(--step-5);
+}
+
+.display-3 {
+  font-size: var(--step-4);
+}
+
+.h1-page {
+  font-size: var(--step-5);
 }
 
 .lede {
   font-size: var(--step-1);
   color: var(--color-text-dim);
   max-width: 40rem;
+  font-weight: 400;
 }
 
 .muted {
@@ -256,39 +302,66 @@ button {
   color: var(--color-accent);
 }
 
-.tech-list {
+.text-dim {
+  color: var(--color-text-dim);
+}
+
+.rule {
+  border: none;
+  border-top: 2px solid var(--color-accent);
+  width: 3rem;
+  margin: var(--space-3) 0;
+}
+
+/* Compact technical spec tags — "premium hardware" typography */
+.tag-row {
   list-style: none;
-  padding: 0;
   margin: var(--space-3) 0 0;
-  display: grid;
-  gap: var(--space-1);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
   font-family: var(--font-mono);
   font-size: var(--step--1);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.5em 0.85em;
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-dim);
+  background: var(--color-bg-alt);
 }
 
-.tech-list li {
-  padding-block: var(--space-1);
-  border-top: var(--border-thin);
+.tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent);
+  flex-shrink: 0;
 }
 
-.tech-list li:first-child {
-  border-top: none;
+.tag-negative::before {
+  background: var(--color-muted);
 }
 
-/* ---------- 5. Buttons & links ------------------------------------------- */
+/* ---------- 5. Buttons, tags, links --------------------------------------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5em;
-  padding: 0.9em 1.6em;
-  min-height: 44px;
+  padding: 0.95em 1.7em;
+  min-height: 46px;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
   font-weight: 700;
   font-size: var(--step--1);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
   background: transparent;
@@ -300,7 +373,7 @@ button {
 .btn-primary {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: #0b0b0c;
+  color: #0a0a0b;
 }
 
 .btn-primary:hover,
@@ -318,14 +391,14 @@ button {
 .btn-book {
   border-color: var(--color-accent);
   color: var(--color-accent);
-  padding: 0.6em 1.1em;
+  padding: 0.55em 1.1em;
   font-size: var(--step--1);
 }
 
 .btn-book:hover,
 .btn-book:focus-visible {
   background: var(--color-accent);
-  color: #0b0b0c;
+  color: #0a0a0b;
 }
 
 .cta-row {
@@ -346,13 +419,29 @@ button {
   color: var(--color-text);
 }
 
+.link-underline {
+  display: inline-block;
+  text-decoration: none;
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  transition: background-size var(--transition);
+  padding-bottom: 0.15em;
+}
+
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 2px;
+}
+
 /* ---------- 6. Header & navigation --------------------------------------- */
 .skip-link {
-  position: absolute;
+  position: fixed;
   left: var(--space-2);
   top: -100px;
   background: var(--color-accent);
-  color: #0b0b0c;
+  color: #0a0a0b;
   padding: 0.75em 1.25em;
   font-weight: 700;
   z-index: 1000;
@@ -364,34 +453,45 @@ button {
 }
 
 .site-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
-  background: rgba(11, 11, 12, 0.92);
-  backdrop-filter: saturate(140%) blur(6px);
-  border-bottom: var(--border-thin);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background-color var(--transition), border-color var(--transition), backdrop-filter var(--transition);
+}
+
+.site-header.is-solid,
+body:not(.has-hero) .site-header {
+  background: rgba(10, 10, 11, 0.92);
+  backdrop-filter: saturate(140%) blur(8px);
+  border-bottom-color: var(--color-border);
 }
 
 @supports not (backdrop-filter: blur(6px)) {
-  .site-header {
+  .site-header.is-solid,
+  body:not(.has-hero) .site-header {
     background: var(--color-bg);
   }
 }
 
 .header-inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   padding-block: var(--space-1);
-  min-height: 64px;
+  min-height: var(--header-h);
 }
 
 .logo {
   text-decoration: none;
-  font-weight: 800;
+  font-weight: 900;
   font-size: var(--step-1);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
   color: var(--color-text);
   white-space: nowrap;
 }
@@ -400,11 +500,11 @@ button {
   color: var(--color-accent);
 }
 
-/* No-JS accessible mobile menu using native <details>/<summary> */
-.nav-disclosure {
-  position: relative;
-}
-
+/* No-JS accessible mobile menu using native <details>/<summary>.
+   Positioning context for the dropdown is .header-inner (see above), not
+   this element — the toggle button itself is too narrow to anchor a
+   240px-wide dropdown against on small screens without it overflowing
+   past the left edge of the viewport. */
 .nav-toggle {
   list-style: none;
   cursor: pointer;
@@ -417,9 +517,10 @@ button {
   border-radius: var(--radius);
   font-size: var(--step--1);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   user-select: none;
+  background: rgba(10, 10, 11, 0.4);
 }
 
 .nav-toggle::-webkit-details-marker {
@@ -437,7 +538,7 @@ button {
 
 .nav-toggle-bars {
   display: inline-block;
-  width: 18px;
+  width: 16px;
   height: 2px;
   background: currentColor;
   position: relative;
@@ -448,106 +549,161 @@ button {
   content: "";
   position: absolute;
   left: 0;
-  width: 18px;
+  width: 16px;
   height: 2px;
   background: currentColor;
 }
 
 .nav-toggle-bars::before {
-  top: -6px;
+  top: -5px;
 }
 
 .nav-toggle-bars::after {
-  top: 6px;
+  top: 5px;
 }
 
-.site-nav {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.5rem);
-  background: var(--color-bg-raised);
-  border: var(--border-thin);
-  min-width: 220px;
-  padding: var(--space-2);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+/* On the narrowest screens, drop the visible "Menu" label and keep the icon
+   only — aria-label still names the control for assistive tech. This is
+   what keeps the logo / menu / book row from crowding at 375px. */
+@media (max-width: 479px) {
+  .nav-toggle-label {
+    display: none;
+  }
+  .nav-toggle {
+    padding-inline: 0.7em;
+  }
+  .header-inner {
+    gap: var(--space-1);
+  }
+}
+
+/*
+ * Two separate <nav> elements carry the same links: `.site-nav--mobile`
+ * lives inside the <details> disclosure and is what's visible below
+ * 900px; `.site-nav--desktop` is a plain nav hidden below 900px and shown
+ * above it. This duplication is deliberate — a native <details> without
+ * the [open] attribute hides its non-<summary> children via the browser's
+ * internal UA behaviour (implemented in a shadow tree in Chromium/WebKit),
+ * and no author CSS can override that short of forcing [open] permanently
+ * (which would default the mobile menu to visibly expanded). Two navs,
+ * each governed by a plain CSS display toggle, sidesteps the problem
+ * entirely and keeps both the mobile and desktop nav fully functional
+ * with zero JavaScript. Only one is ever in the accessibility tree at a
+ * time, since the other has display:none.
+ */
+.site-nav--desktop {
+  display: none;
 }
 
 .site-nav ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0.25rem;
 }
 
 .site-nav a {
-  display: block;
-  padding: 0.75em 0.5em;
-  min-height: 44px;
   display: flex;
   align-items: center;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: var(--step--1);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   border-radius: var(--radius);
 }
 
-.site-nav a:hover,
-.site-nav a:focus-visible {
+.site-nav--mobile {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  background: var(--color-bg-raised);
+  border: var(--border-thin);
+  min-width: 240px;
+  padding: var(--space-2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.site-nav--mobile ul {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.site-nav--mobile a {
+  padding: 0.85em 0.6em;
+  min-height: 44px;
+}
+
+.site-nav--mobile a:hover,
+.site-nav--mobile a:focus-visible {
   background: var(--color-bg-alt);
   color: var(--color-accent);
 }
 
-.site-nav a[aria-current="page"] {
+.site-nav--mobile a[aria-current="page"] {
   color: var(--color-accent);
 }
 
 @media (min-width: 900px) {
-  .nav-toggle {
+  .nav-disclosure {
     display: none;
   }
 
-  .nav-disclosure[open] .site-nav,
-  .site-nav {
-    position: static;
-    background: none;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    min-width: 0;
+  .site-nav--desktop {
+    display: block;
   }
 
-  .site-nav ul {
-    grid-auto-flow: column;
-    gap: var(--space-3);
+  .site-nav--desktop ul {
+    display: flex;
+    gap: var(--space-4);
   }
 
-  .site-nav a {
-    padding: 0.4em 0;
+  .site-nav--desktop a {
+    padding: 0.3em 0;
     min-height: auto;
+    background-image: linear-gradient(var(--color-accent), var(--color-accent));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 2px;
+    transition: background-size var(--transition);
+  }
+
+  .site-nav--desktop a:hover,
+  .site-nav--desktop a:focus-visible {
+    background-color: transparent;
+    background-size: 100% 2px;
+    color: var(--color-text);
+  }
+
+  .site-nav--desktop a[aria-current="page"] {
+    background-size: 100% 2px;
   }
 }
 
-/* Force nav open on desktop regardless of details state via CSS only */
-@media (min-width: 900px) {
-  .nav-disclosure {
-    display: contents;
-  }
-}
-
-/* ---------- 7. Hero ------------------------------------------------------- */
+/* ---------- 7. Hero — asymmetric split, image column + text panel --------- */
 .hero {
   position: relative;
-  min-height: 88vh;
-  display: flex;
-  align-items: flex-end;
   border-top: none;
 }
 
+@media (min-width: 860px) {
+  .hero {
+    display: grid;
+    grid-template-columns: 13fr 7fr;
+    min-height: 100svh;
+  }
+}
+
 .hero-media {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+  position: relative;
   overflow: hidden;
+  aspect-ratio: 4 / 5;
+}
+
+@media (min-width: 860px) {
+  .hero-media {
+    aspect-ratio: auto;
+    height: 100%;
+  }
 }
 
 .hero-media img {
@@ -562,239 +718,292 @@ button {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(11, 11, 12, 0.35) 0%,
-    rgba(11, 11, 12, 0.55) 45%,
-    rgba(11, 11, 12, 0.96) 100%
+    rgba(10, 10, 11, 0) 55%,
+    rgba(10, 10, 11, 0.55) 100%
   );
 }
 
-.hero-content {
-  padding-block: var(--space-5) var(--space-5);
-  max-width: 50rem;
+@media (min-width: 860px) {
+  .hero-media::after {
+    background: linear-gradient(
+      90deg,
+      rgba(10, 10, 11, 0) 70%,
+      rgba(10, 10, 11, 0.9) 100%
+    );
+  }
 }
 
-.hero-kicker {
+.hero-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-5) var(--container-pad) var(--space-5);
+  background: var(--color-bg);
+  position: relative;
+}
+
+@media (min-width: 860px) {
+  .hero-panel {
+    padding: var(--space-4) clamp(1.5rem, 3vw, 3rem) var(--space-6);
+  }
+}
+
+.hero-eyebrow {
   font-family: var(--font-mono);
   color: var(--color-accent);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   font-size: var(--step--1);
   margin-bottom: var(--space-2);
 }
 
-.hero-tagline {
-  font-size: var(--step-1);
-  color: var(--color-text-dim);
-  max-width: 38rem;
+.hero-title {
+  font-size: clamp(2.4rem, 10vw + 0.5rem, 4.2rem);
+  margin-bottom: var(--space-3);
 }
 
-.hero-specs {
+@media (min-width: 860px) {
+  .hero-title {
+    font-size: clamp(2.6rem, 3.6vw + 1.2rem, 5.4rem);
+  }
+}
+
+.hero-sub {
+  font-family: var(--font-mono);
+  font-size: var(--step-0);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.hero-strip {
   font-family: var(--font-mono);
   font-size: var(--step--1);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   margin-top: var(--space-3);
-  border-top: var(--border-thin);
+  border-top: 1px solid var(--color-border-strong);
   padding-top: var(--space-2);
   display: inline-block;
-}
-
-/* ---------- 8. Section-specific components -------------------------------- */
-.showreel-frame {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  background: var(--color-bg-alt);
-  border: var(--border-thin);
-  overflow: hidden;
-}
-
-.showreel-frame video,
-.showreel-frame img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.showreel-duration {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  background: rgba(11, 11, 12, 0.75);
-  border: var(--border-thin);
-  padding: 0.35em 0.7em;
-  letter-spacing: 0.08em;
-}
-
-.split-media img {
-  width: 100%;
-  border: var(--border-thin);
-}
-
-.stat-huge {
-  font-size: clamp(3.5rem, 8vw + 1rem, 9rem);
-  font-weight: 800;
-  line-height: 0.95;
-  color: var(--color-accent);
-  letter-spacing: -0.02em;
-}
-
-.stat-sub {
-  font-family: var(--font-mono);
-  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-text-dim);
-  margin-top: var(--space-1);
 }
 
-.placeholder-list {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-3) 0 0;
-  display: grid;
-  gap: var(--space-1);
-  color: var(--color-muted);
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
+/* ---------- 8. Tiles & gallery scroll -------------------------------------- */
+.tile-grid {
+  grid-template-columns: repeat(1, 1fr);
 }
 
-.capability-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0;
-}
-
-.capability-item {
-  padding-block: var(--space-3);
-  border-top: var(--border-thin);
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-1);
-}
-
-.capability-item:first-child {
-  border-top: none;
-}
-
-@media (min-width: 768px) {
-  .capability-item {
-    grid-template-columns: 14rem 1fr;
-    align-items: baseline;
+@media (min-width: 640px) {
+  .tile-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.capability-item h3 {
-  font-size: var(--step-0);
-  margin: 0;
-}
-
-.capability-item p {
-  margin: 0;
-  color: var(--color-text-dim);
-}
-
-/* ---------- 9. Cards ------------------------------------------------------ */
-.card {
-  border: var(--border-thin);
-  background: var(--color-bg-alt);
-  display: flex;
-  flex-direction: column;
-}
-
-.card-media {
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  background: var(--color-bg-raised);
-}
-
-.card-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.card-body {
-  padding: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  flex: 1;
-}
-
-.card-meta {
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  color: var(--color-muted);
-  letter-spacing: 0.04em;
-}
-
-.card-title {
-  font-size: var(--step-0);
-  margin: 0;
-}
-
-.card-desc {
-  color: var(--color-text-dim);
-  margin: 0;
-  flex: 1;
-}
-
-.card-link {
-  margin-top: var(--space-1);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: var(--step--1);
-  letter-spacing: 0.06em;
-  text-decoration: none;
-  color: var(--color-accent);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  min-height: 44px;
-}
-
-.card-link:hover,
-.card-link:focus-visible {
-  color: var(--color-text);
-}
-
-.card-link::after {
-  content: "\2192";
+@media (min-width: 1024px) {
+  .tile-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .tile-grid > *:nth-child(2) {
+    margin-top: var(--space-5);
+  }
 }
 
 .tile {
   position: relative;
-  aspect-ratio: 1 / 1;
+  display: block;
+  text-decoration: none;
+  color: var(--color-text);
   border: var(--border-thin);
+  background: var(--color-bg-alt);
+  overflow: hidden;
+}
+
+.tile-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   background: var(--color-bg-raised);
 }
 
-.tile img {
+.tile-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 600ms ease;
 }
 
-.tile-label {
+.tile:hover .tile-media img,
+.tile:focus-visible .tile-media img {
+  transform: scale(1.045);
+}
+
+.tile-media::after {
+  content: "";
   position: absolute;
-  inset-inline: 0;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(10, 10, 11, 0.92) 100%);
+}
+
+.tile-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
   bottom: 0;
-  padding: 0.6em 0.75em;
+  padding: var(--space-3);
+}
+
+.tile-genre {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.3em;
+  display: block;
+}
+
+.tile-title {
+  font-size: var(--step-2);
+  margin: 0;
+  line-height: 1.02;
+}
+
+.tile-body {
+  padding: var(--space-3);
+  border-top: var(--border-thin);
+}
+
+.tile-body p {
+  color: var(--color-text-dim);
+  margin: 0;
+}
+
+.tile-cta {
+  margin-top: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
   font-weight: 700;
   font-size: var(--step--1);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.85));
+  color: var(--color-accent);
+}
+
+.tile-cta::after {
+  content: "\2192";
+}
+
+/* Square artwork tiles (show gallery) */
+.tile-square .tile-media {
+  aspect-ratio: 1 / 1;
+}
+
+/* Horizontal scroll on small screens, staggered grid from tablet up */
+.gallery-scroll {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: var(--space-2);
+  margin: 0 calc(var(--container-pad) * -1);
+  padding-inline: var(--container-pad);
+  -webkit-overflow-scrolling: touch;
+}
+
+.gallery-scroll .tile {
+  flex: 0 0 62%;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 640px) {
+  .gallery-scroll .tile {
+    flex-basis: 38%;
+  }
+}
+
+@media (min-width: 900px) {
+  .gallery-scroll {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    overflow: visible;
+    margin: 0;
+    padding-inline: 0;
+  }
+  .gallery-scroll .tile {
+    flex: initial;
+  }
+  .gallery-scroll .tile:nth-child(2n) {
+    margin-top: var(--space-4);
+  }
+}
+
+/* ---------- 9. Spec rows & metric cards ------------------------------------ */
+.spec-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  border-top: var(--border-thin);
+}
+
+.spec-row:first-child {
+  border-top: none;
+}
+
+.spec-num {
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+  font-size: var(--step-0);
+}
+
+.spec-row h3 {
+  font-size: var(--step-1);
+  margin: 0 0 0.25em;
+}
+
+.spec-row p {
+  margin: 0;
+  color: var(--color-text-dim);
+}
+
+.stat-huge {
+  font-size: clamp(5rem, 10vw + 2rem, 13rem);
+  font-weight: 900;
+  line-height: 0.85;
+  color: var(--color-accent);
+  letter-spacing: -0.03em;
+}
+
+.stat-sub {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  font-size: var(--step-2);
+  margin-top: var(--space-1);
+  line-height: 1.1;
 }
 
 .metric-card {
-  border: var(--border-thin);
-  padding: var(--space-3);
+  border-top: 2px solid var(--color-accent);
+  padding-top: var(--space-2);
   text-align: left;
+}
+
+.metric-value {
+  font-size: var(--step-3);
+  font-weight: 900;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
 }
 
 .metric-platform {
@@ -805,35 +1014,44 @@ button {
   color: var(--color-muted);
 }
 
-.metric-value {
-  font-size: var(--step-2);
-  font-weight: 800;
-  color: var(--color-text);
-  margin-top: 0.25em;
+.service-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
 }
 
-.metric-card a {
-  display: inline-block;
-  margin-top: var(--space-1);
-  font-size: var(--step--1);
+.service-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.3em;
+  padding-block: var(--space-3);
+  border-top: var(--border-thin);
 }
 
-.service-card {
-  border: var(--border-thin);
-  padding: var(--space-3);
+.service-row:first-child {
+  border-top: none;
 }
 
-.service-card h3 {
-  font-size: var(--step-0);
-  margin-bottom: 0.35em;
+@media (min-width: 700px) {
+  .service-row {
+    grid-template-columns: 12rem 1fr;
+    align-items: baseline;
+  }
 }
 
-.service-card p {
-  color: var(--color-text-dim);
+.service-row h3 {
+  font-size: var(--step-1);
   margin: 0;
 }
 
-/* ---------- 10. Forms ------------------------------------------------------ */
+.service-row p {
+  margin: 0;
+  color: var(--color-text-dim);
+}
+
+/* ---------- 10. Forms -------------------------------------------------------- */
 .form {
   display: grid;
   gap: var(--space-3);
@@ -859,22 +1077,16 @@ button {
 label {
   font-weight: 700;
   font-size: var(--step--1);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.form-hint {
-  font-size: var(--step--1);
-  color: var(--color-muted);
-  font-weight: 400;
-  text-transform: none;
+  font-family: var(--font-mono);
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  min-height: 44px;
+  min-height: 46px;
   padding: 0.75em 0.9em;
   background: var(--color-bg-alt);
   border: 1px solid var(--color-border-strong);
@@ -902,7 +1114,7 @@ textarea:focus-visible {
   color: var(--color-muted);
 }
 
-/* ---------- 11. Footer ------------------------------------------------------ */
+/* ---------- 11. Footer ------------------------------------------------------- */
 .site-footer {
   border-top: var(--border-thin);
   padding-block: var(--space-5) var(--space-4);
@@ -921,8 +1133,9 @@ textarea:focus-visible {
 }
 
 .footer-brand {
-  font-weight: 800;
-  font-size: var(--step-1);
+  font-weight: 900;
+  font-size: var(--step-2);
+  letter-spacing: -0.02em;
 }
 
 .footer-nav ul,
@@ -950,7 +1163,7 @@ textarea:focus-visible {
 .footer-heading {
   font-family: var(--font-mono);
   font-size: var(--step--1);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-muted);
   margin-bottom: var(--space-2);
@@ -981,6 +1194,19 @@ textarea:focus-visible {
   text-decoration: underline;
 }
 
+.social-inline {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0 0;
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* ---------- 12. Media / aspect-ratio helpers -------------------------------- */
 .ratio-16-9 {
   aspect-ratio: 16 / 9;
@@ -1001,7 +1227,82 @@ textarea:focus-visible {
   object-fit: cover;
 }
 
-/* ---------- 13. Utilities & accessibility ----------------------------------- */
+/* Showreel — large dominant media block, not a boxed player */
+.showreel-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--color-bg-alt);
+  overflow: hidden;
+}
+
+.showreel-frame video,
+.showreel-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.showreel-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: var(--space-3);
+  pointer-events: none;
+}
+
+.showreel-overlay > * {
+  pointer-events: auto;
+}
+
+.showreel-watch {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: rgba(10, 10, 11, 0.55);
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--color-border-strong);
+}
+
+.showreel-duration {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  letter-spacing: 0.1em;
+  color: var(--color-text);
+  background: rgba(10, 10, 11, 0.55);
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--color-border-strong);
+}
+
+/* ---------- 13. Reveal-on-scroll + reduced motion --------------------------- */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.js .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------- 14. Utilities & accessibility ----------------------------------- */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -1028,44 +1329,58 @@ textarea:focus-visible {
   margin-top: 0;
 }
 
-.flow > * + * {
-  margin-top: var(--space-2);
+.email-cta {
+  display: inline-block;
+  font-size: clamp(1.6rem, 3vw + 1rem, 3.4rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  text-decoration: none;
+  border-bottom: 2px solid var(--color-accent);
+  padding-bottom: 0.12em;
+  word-break: break-word;
+}
+
+.email-cta:hover,
+.email-cta:focus-visible {
+  color: var(--color-accent);
+}
+
+.category-row {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--step-0);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.category-row li {
+  position: relative;
+  padding-right: var(--space-3);
+}
+
+.category-row li:not(:last-child)::after {
+  content: "/";
+  position: absolute;
+  right: 0;
+  color: var(--color-accent);
 }
 
 .next-live {
-  border: var(--border-thin);
-  padding: var(--space-4);
+  border-top: 2px solid var(--color-accent);
+  padding-top: var(--space-3);
   display: grid;
-  gap: var(--space-3);
-}
-
-@media (min-width: 768px) {
-  .next-live {
-    grid-template-columns: 220px 1fr auto;
-    align-items: center;
-  }
-}
-
-.next-live-art {
-  aspect-ratio: 1/1;
-  border: var(--border-thin);
-  overflow: hidden;
-}
-
-.next-live-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  gap: var(--space-2);
 }
 
 .next-live-meta {
   font-family: var(--font-mono);
   color: var(--color-text-dim);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-
-/* ---------- 14. Responsive notes ---------------------------------------------
-   Fluid type via clamp() throughout removes the need for most breakpoints.
-   Explicit breakpoints used: 560px, 620px, 768px, 900px, 1024px.
-   Content max-width is capped at var(--container-width) for large desktops.
-   ---------------------------------------------------------------------------- */

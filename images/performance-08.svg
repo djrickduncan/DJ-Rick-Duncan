@@ -2,7 +2,7 @@
   <rect width="1280" height="720" fill="#131315"/>
   <rect x="0.5" y="0.5" width="1279" height="719" fill="none" stroke="#2a2a2d" stroke-width="1"/>
   <line x1="0" y1="720" x2="1280" y2="0" stroke="#2a2a2d" stroke-width="1"/>
-  <rect x="600.0" y="309.0" width="80" height="6" fill="#ee4236"/>
-  <text x="640.0" y="367.65" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="51" font-weight="700" letter-spacing="2" text-anchor="middle">HARDCORE / OLDSKOOL</text>
-  <text x="640.0" y="406.65" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="25" letter-spacing="1" text-anchor="middle">REPLACE: performance still, 1280x720</text>
+  <rect x="600.0" y="328.0" width="80" height="6" fill="#ee4236"/>
+  <text x="640.0" y="364.8" fill="#cfcdc9" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="700" letter-spacing="2" text-anchor="middle">HARDCORE / OLDSKOOL</text>
+  <text x="640.0" y="394.8" fill="#8c8b8a" font-family="Arial, Helvetica, sans-serif" font-size="16" letter-spacing="1" text-anchor="middle">REPLACE: performance still, 1280x720</text>
 </svg>

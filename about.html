@@ -22,7 +22,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" /><!-- PLACEHOLDER -->
   <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="theme-color" content="#0b0b0c" />
+  <meta name="theme-color" content="#0a0a0b" />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -33,12 +33,7 @@
       <a href="/index.html" class="logo" aria-label="Just:DJ — Rick Duncan, home">
         JUST<span class="logo-accent">:</span>DJ
       </a>
-      <details class="nav-disclosure">
-        <summary class="nav-toggle" aria-label="Open menu">
-          <span class="nav-toggle-bars" aria-hidden="true"></span>
-          <span>Menu</span>
-        </summary>
-        <nav class="site-nav" aria-label="Primary">
+      <nav class="site-nav site-nav--desktop" aria-label="Primary">
           <ul>
             <li><a href="/index.html">Home</a></li>
             <li><a href="/watch.html">Watch</a></li>
@@ -47,16 +42,30 @@
             <li><a href="/contact.html">Contact</a></li>
           </ul>
         </nav>
-      </details>
-      <a class="btn btn-book" href="/contact.html">Book / Contact</a>
+        <details class="nav-disclosure">
+          <summary class="nav-toggle" aria-label="Open menu">
+            <span class="nav-toggle-bars" aria-hidden="true"></span>
+            <span class="nav-toggle-label">Menu</span>
+          </summary>
+          <nav class="site-nav site-nav--mobile" aria-label="Primary">
+            <ul>
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/watch.html">Watch</a></li>
+            <li><a href="/about.html" aria-current="page">Just:DJ</a></li>
+            <li><a href="/shows.html">Shows</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+          </nav>
+        </details>
+      <a class="btn btn-book" href="/contact.html">Book</a>
     </div>
   </header>
 
   <main id="main">
-    <section class="section" style="border-top:none;padding-top:var(--space-5)">
+    <section class="page-head">
       <div class="container">
-        <p class="section-label">Just:DJ</p>
-        <h1 class="h1-page">Rick Duncan / Just:DJ</h1>
+        <p class="kicker">Just:DJ</p>
+        <h1 class="h1-page">Rick Duncan<br /><span class="text-accent">Just:DJ</span></h1>
         <p class="lede">
           Rick is not being presented as a retro DJ. He is a current
           electronic-music DJ who chooses turntables as his performance
@@ -66,13 +75,13 @@
       </div>
     </section>
 
-    <!-- ============ THE STORY ============ -->
+    <!-- ============ 01 / THE STORY ============ -->
     <section class="section">
       <div class="container">
-        <div class="grid grid-2">
+        <div class="split split-40-60 reveal">
           <div>
-            <p class="section-label">The Story</p>
-            <h2>The story</h2>
+            <p class="kicker"><span class="section-num">01</span>&nbsp;/&nbsp;The Story</p>
+            <h2 class="display-3">The story</h2>
             <p>
               Rick Duncan has spent more than three decades mixing on
               turntables. Just:DJ is the current chapter of that
@@ -80,26 +89,26 @@
               make the DJ performance itself visible and engaging, while
               presenting it through a modern broadcast and visual format.
             </p>
-            <ul class="placeholder-list">
-              <li>[Career history to add]</li>
-              <li>[Early years / background to add]</li>
-              <li>[Key milestones to add]</li>
-            </ul>
+            <!-- ADD CAREER HISTORY HERE: background, early years, key
+                 milestones. Do not publish placeholder text. -->
           </div>
-          <div class="split-media">
+          <div class="img-frame ratio-16-9">
             <img src="/images/vinyl-placeholder.svg" alt="Technics turntables and control vinyl used in the Just:DJ performance" width="1600" height="1000" loading="lazy" />
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ THE TURNTABLES ============ -->
+    <!-- ============ 02 / THE TURNTABLES ============ -->
     <section class="section">
       <div class="container">
-        <div class="grid grid-2">
+        <div class="split reveal">
+          <div class="img-frame ratio-1-1">
+            <img src="/images/intro-turntables.svg" alt="Technics-style turntable detail" width="800" height="600" loading="lazy" />
+          </div>
           <div>
-            <p class="section-label">The Turntables</p>
-            <h2>The turntables</h2>
+            <p class="kicker"><span class="section-num">02</span>&nbsp;/&nbsp;The Turntables</p>
+            <h2 class="display-3">The turntables</h2>
             <p>
               Turntables are not a visual prop — they are the performance
               interface. Rick uses Technics turntables with vinyl and
@@ -112,28 +121,25 @@
               hands-on throughout. The technology expands the music library
               without replacing the DJ technique.
             </p>
-            <ul class="tech-list">
-              <li>Technics turntables</li>
-              <li>Vinyl / control vinyl</li>
-              <li>Serato DVS</li>
-              <li>Manual mixing</li>
-              <li>No sync-led performance</li>
+            <ul class="tag-row">
+              <li class="tag">Technics 1210</li>
+              <li class="tag">Serato DVS</li>
+              <li class="tag">Control Vinyl</li>
+              <li class="tag">Manual Pitch</li>
+              <li class="tag tag-negative">No Sync</li>
             </ul>
-          </div>
-          <div class="split-media">
-            <img src="/images/intro-turntables.svg" alt="Technics-style turntable detail" width="800" height="600" loading="lazy" />
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ THE MUSIC ============ -->
+    <!-- ============ 03 / THE MUSIC ============ -->
     <section class="section">
       <div class="container">
-        <div class="grid grid-2">
+        <div class="split split-60-40 reveal">
           <div>
-            <p class="section-label">The Music</p>
-            <h2>The music</h2>
+            <p class="kicker"><span class="section-num">03</span>&nbsp;/&nbsp;The Music</p>
+            <h2 class="display-3">The music</h2>
             <p>
               The music moves across house, techno, trance, drum &amp;
               bass, jungle, hardcore and the spaces between them. The
@@ -142,20 +148,23 @@
             </p>
             <p class="lede">House &bull; Techno &bull; Trance &bull; Jungle &bull; Drum &amp; Bass &bull; Hardcore &bull; Classics</p>
           </div>
-          <div class="split-media">
+          <div class="img-frame ratio-1-1">
             <img src="/images/intro-hands.svg" alt="Hands mixing on vinyl and control vinyl" width="800" height="600" loading="lazy" />
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ THE BROADCAST ============ -->
+    <!-- ============ 04 / THE BROADCAST ============ -->
     <section class="section">
       <div class="container">
-        <div class="grid grid-2">
+        <div class="split reveal">
+          <div class="img-frame ratio-1-1">
+            <img src="/images/intro-broadcast.svg" alt="Finished Just:DJ multi-camera broadcast feed" width="800" height="600" loading="lazy" />
+          </div>
           <div>
-            <p class="section-label">The Broadcast</p>
-            <h2>The broadcast</h2>
+            <p class="kicker"><span class="section-num">04</span>&nbsp;/&nbsp;The Broadcast</p>
+            <h2 class="display-3">The broadcast</h2>
             <p>
               Just:DJ is produced as a complete live programme, not simply
               a camera pointed at a DJ booth — multi-camera video,
@@ -163,26 +172,22 @@
               distribution across landscape and vertical formats.
             </p>
           </div>
-          <div class="split-media">
-            <img src="/images/intro-broadcast.svg" alt="Finished Just:DJ multi-camera broadcast feed" width="800" height="600" loading="lazy" />
-          </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ THE APPROACH ============ -->
+    <!-- ============ 05 / THE APPROACH ============ -->
     <section class="section">
-      <div class="container">
-        <div class="section-head">
-          <p class="section-label">The Approach</p>
-          <h2>The approach</h2>
-        </div>
-        <p>
-          Modern music. Traditional DJ interface. Modern production. The
-          purpose of Just:DJ is to make the DJ performance itself visible
-          and engaging — hands-on, unmistakably a DJ at work, presented
-          through a broadcast-grade production that respects both the
-          music and the audience watching.
+      <div class="container reveal">
+        <p class="kicker"><span class="section-num">05</span>&nbsp;/&nbsp;The Approach</p>
+        <h2 class="display-2">
+          Modern music.<br />Traditional interface.<br /><span class="text-accent">Modern production.</span>
+        </h2>
+        <p class="lede">
+          The purpose of Just:DJ is to make the DJ performance itself
+          visible and engaging — hands-on, unmistakably a DJ at work,
+          presented through a broadcast-grade production that respects
+          both the music and the audience watching.
         </p>
       </div>
     </section>

@@ -17,7 +17,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" /><!-- PLACEHOLDER -->
   <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="theme-color" content="#0b0b0c" />
+  <meta name="theme-color" content="#0a0a0b" />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -28,12 +28,7 @@
       <a href="/index.html" class="logo" aria-label="Just:DJ — Rick Duncan, home">
         JUST<span class="logo-accent">:</span>DJ
       </a>
-      <details class="nav-disclosure">
-        <summary class="nav-toggle" aria-label="Open menu">
-          <span class="nav-toggle-bars" aria-hidden="true"></span>
-          <span>Menu</span>
-        </summary>
-        <nav class="site-nav" aria-label="Primary">
+      <nav class="site-nav site-nav--desktop" aria-label="Primary">
           <ul>
             <li><a href="/index.html">Home</a></li>
             <li><a href="/watch.html">Watch</a></li>
@@ -42,15 +37,29 @@
             <li><a href="/contact.html">Contact</a></li>
           </ul>
         </nav>
-      </details>
-      <a class="btn btn-book" href="/contact.html">Book / Contact</a>
+        <details class="nav-disclosure">
+          <summary class="nav-toggle" aria-label="Open menu">
+            <span class="nav-toggle-bars" aria-hidden="true"></span>
+            <span class="nav-toggle-label">Menu</span>
+          </summary>
+          <nav class="site-nav site-nav--mobile" aria-label="Primary">
+            <ul>
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/watch.html">Watch</a></li>
+            <li><a href="/about.html">Just:DJ</a></li>
+            <li><a href="/shows.html">Shows</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+          </nav>
+        </details>
+      <a class="btn btn-book" href="/contact.html">Book</a>
     </div>
   </header>
 
   <main id="main">
-    <section class="section" style="border-top:none;padding-top:var(--space-5)">
+    <section class="page-head">
       <div class="container flow" style="max-width:60rem">
-        <p class="section-label">Accessibility</p>
+        <p class="kicker">Accessibility</p>
         <h1 class="h1-page">Accessibility</h1>
         <p>
           This site is built with the intent to meet WCAG 2.2 Level AA

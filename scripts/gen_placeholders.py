@@ -5,6 +5,7 @@ need regenerating. Real photography/video should replace these files
 before launch (see README.md for expected filenames and dimensions).
 """
 import os
+from xml.sax.saxutils import escape
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "images")
 os.makedirs(OUT, exist_ok=True)
@@ -27,8 +28,15 @@ TEMPLATE = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" widt
 
 
 def make(path, w, h, label, sub, alt):
-    fs = max(18, min(w, h) // 14)
-    fs2 = max(12, fs // 2)
+    # Placeholders get cropped to very different aspect ratios depending on
+    # where they're used (portrait hero on mobile, wide split panels on
+    # desktop, square tiles, etc). object-fit:cover crops symmetrically from
+    # the centre, so text is kept small, short and centred rather than sized
+    # relative to the full canvas — that's what survives an aggressive crop
+    # without looking broken. Real photography replacing these files has no
+    # such constraint.
+    fs = max(14, min(min(w, h) // 22, 44))
+    fs2 = max(11, fs // 2)
     cx = w / 2
     cy = h / 2
     svg = TEMPLATE.format(
@@ -36,7 +44,7 @@ def make(path, w, h, label, sub, alt):
         accent=ACCENT, text=TEXT, text2=TEXT2,
         cx0=cx - 40, cy0=cy - fs, cw=80,
         cx=cx, ty=cy + fs * 0.15, ty2=cy + fs * 0.15 + fs2 + 14,
-        fs=fs, fs2=fs2, label=label, sub=sub, alt=alt,
+        fs=fs, fs2=fs2, label=escape(label), sub=escape(sub), alt=escape(alt),
     )
     with open(path, "w") as f:
         f.write(svg)
@@ -45,8 +53,8 @@ def make(path, w, h, label, sub, alt):
 
 # name, w, h, label, sub, alt-text
 items = [
-    ("hero-placeholder.svg", 1920, 1200, "HERO — LIVE AT THE DECKS",
-     "REPLACE: photo of Rick Duncan actively mixing on Technics turntables",
+    ("hero-placeholder.svg", 1920, 1200, "HERO IMAGE",
+     "REPLACE: Rick Duncan mixing on Technics turntables",
      "Placeholder hero image: Rick Duncan performing on Technics turntables"),
     ("showreel-poster.svg", 1920, 1080, "SHOWREEL POSTER",
      "REPLACE: video poster frame, 1920x1080",
@@ -75,16 +83,16 @@ items = [
     ("performance-02.svg", 1280, 720, "TRANCE / HARDER",
      "REPLACE: performance still, 1280x720",
      "Placeholder thumbnail for a trance and harder dance performance"),
-    ("performance-03.svg", 1280, 720, "JUNGLE / D&B / HARDCORE",
+    ("performance-03.svg", 1280, 720, "JUNGLE / D&B",
      "REPLACE: performance still, 1280x720",
      "Placeholder thumbnail for a jungle, drum and bass and hardcore performance"),
-    ("performance-04.svg", 1280, 720, "FEATURED PERFORMANCE",
+    ("performance-04.svg", 1280, 720, "FEATURED",
      "REPLACE: featured performance still, 1280x720",
      "Placeholder thumbnail for the featured performance"),
-    ("performance-05.svg", 1280, 720, "HOUSE / TECHNO — SET 2",
+    ("performance-05.svg", 1280, 720, "HOUSE / TECHNO 2",
      "REPLACE: performance still, 1280x720",
      "Placeholder thumbnail for a further house and techno performance"),
-    ("performance-06.svg", 1280, 720, "TRANCE / HARD DANCE — SET 2",
+    ("performance-06.svg", 1280, 720, "TRANCE / HARDER 2",
      "REPLACE: performance still, 1280x720",
      "Placeholder thumbnail for a further trance and hard dance performance"),
     ("performance-07.svg", 1280, 720, "SCRATCH / TURNTABLISM",

@@ -45,18 +45,53 @@ static build. Keep the header/nav/footer in sync across pages when editing.
 
 ## Main design decisions
 
+This is an editorial, magazine-style art direction — DJ Mag/Mixmag-adjacent,
+not a SaaS template — built around oversized type, asymmetric layouts and a
+restrained red accent rather than cards and icon grids.
+
 - **No framework.** Semantic HTML5 + CSS Grid/Flexbox + vanilla JS only.
-- **Dark, editorial palette:** near-black background (`#0b0b0c`), off-white
-  text, Just:DJ red accent (`#ee4236`), all defined as CSS custom properties
-  in `css/style.css` (`:root`) so the palette/spacing/type scale can be
-  changed globally from one place.
+- **Dark, editorial palette:** near-black background (`#0a0a0b`), off-white
+  text, Just:DJ red accent (`#ee4236`) used sparingly (rules, labels, section
+  numbers, tag bullets, hover states) rather than flooding sections. All
+  colours/spacing/type are CSS custom properties in `css/style.css` (`:root`).
+- **Numbered section system.** Every major homepage section carries a small
+  mono kicker like `01 / Performance`, `02 / Vinyl`, `03 / Experience` — the
+  `.kicker` + `.section-num` classes. This is the primary editorial rhythm
+  device and doubles as a wayfinding aid.
+- **Asymmetric split layouts** (`.split`, `.split-60-40`, `.split-40-60`)
+  alternate image-left/image-right and column ratios section to section, so
+  no two sections in a row share the same shape.
+- **Cinematic split hero.** Image column (≈65%) + solid text panel (≈35%) at
+  desktop; image-on-top, panel-below on mobile. Header is fixed and
+  transparent over the hero, turning solid on scroll (`.site-header.is-solid`,
+  toggled by `js/main.js`; pages without a hero are solid by default via
+  `body:not(.has-hero)`).
+- **Image-led tiles, not SaaS cards.** Performance/show tiles (`.tile`) are
+  a single clickable image with an always-visible overlay caption — no
+  hover-dependent content, square corners, a subtle image-scale on hover only.
+  The show artwork gallery (`.gallery-scroll`) is a native horizontal scroll
+  on mobile and a staggered CSS grid from tablet up — no carousel JS.
+- **Spec-sheet typography for technical detail.** The Vinyl section's gear
+  list (`.tag`/`.tag-row`) and the Broadcast section's capability list
+  (`.spec-row`, numbered 01–05) read like hardware spec typography rather
+  than bullet points or icon-feature grids.
+- **No visible placeholder text.** Anything factual that hasn't been
+  supplied (career history, follower counts, next-show details) is either
+  omitted with an HTML comment marking where to add it, or the whole
+  component is left commented out (social metrics) rather than shown with
+  `[bracketed]` text. See "Placeholders" below for the exact list.
 - **Fluid type** via `clamp()` — no separate mobile/desktop type rules for
   most headings.
 - **No-JavaScript mobile navigation.** The mobile menu is a native
   `<details>/<summary>` disclosure element — fully keyboard operable and
   screen-reader friendly with zero JavaScript. JS only adds a few UX
   niceties (closing the menu after a link is clicked, closing it on
-  outside-click/Escape).
+  outside-click/Escape, header solid-state, reveal-on-scroll).
+- **Restrained motion.** A small `IntersectionObserver` in `js/main.js` adds
+  a fade/translate-in (`.reveal` → `.is-visible`) to major section blocks.
+  Content is visible immediately with JS disabled or under
+  `prefers-reduced-motion: reduce` — this is decoration, never a gate on
+  content.
 - **System font stack** — no web font downloads.
 - **A persistent "Book / Contact" button** in the header on every page,
   without dominating the navigation visually.
@@ -167,22 +202,33 @@ changes) and keep the hero image un-lazy-loaded.
   192×192 and 512×512 PNG icons for broader home-screen support once real
   artwork exists.
 
-**Copy / factual content** — every bracketed placeholder must be replaced
-with real information (never invent this data):
-- `[VENUES / EVENTS TO ADD]`, `[RADIO EXPERIENCE TO ADD]`,
-  `[RESIDENCIES TO ADD]`, `[NOTABLE APPEARANCES TO ADD]` (homepage
-  Experience section, and `about.html`'s "The Story").
-- `[CURRENT FOLLOWERS]` × 5 platforms, plus `[Live views]` /
-  `[Shows broadcast]` / `[Video views]` (homepage Social/Audience section).
+**Copy / factual content** — unknown facts are never shown publicly on this
+build. Instead, look for HTML comments marking where real content goes, and
+add it there (never invent this data):
+- `<!-- ADD CAREER HISTORY HERE -->` — homepage Experience section
+  (`index.html`, "05 / Experience") and `about.html`'s "The Story" — add
+  venues/events, radio experience, residencies and notable appearances as
+  real prose or a list once supplied.
+- The homepage **Social / Audience metrics section is currently commented
+  out entirely** (search `index.html` for "SOCIAL / AUDIENCE" — it sits
+  between the show-artwork gallery and "Available for"). Do not uncomment
+  it with placeholder numbers; once real follower counts exist, rebuild it
+  using `.metric-card` / `.metric-value` / `.metric-platform` (still defined
+  in `css/style.css`) with real figures and real profile links.
 - Social profile URLs — every `href="#"` on a social icon/link across all
   pages needs the real profile URL.
 - `bookings@[DOMAIN].com` — replace with the real booking email address in
-  every page (search for `bookings@example.com`).
-- `watch.html` performance card details: `[Genre]`, `[Duration]`, `[Date]`,
-  `[Set title]`, `[Platform]`, and each `href="#"` watch link.
-- `shows.html`: `[Show name to be confirmed]`, `[Day]`, `[Date]`, `[Time]`
-  under "Next Live", and the `[Genre]` / `[Date]` / description text on the
-  recent-shows cards.
+  every page (search for `bookings@example.com`). This one *is* shown as a
+  literal on-page placeholder by design (it's the primary contact CTA) —
+  swap the whole string for the real address.
+- `watch.html` and `shows.html` carry `<!-- ADD SET/EPISODE DETAILS HERE -->`
+  and `<!-- ADD FEATURED PERFORMANCE DETAILS HERE -->` comments next to each
+  tile group — add real titles, durations, dates and platform links there,
+  and swap each tile's `href="#"` for the real video/stream URL.
+- `shows.html` "Next Live" currently reads "No show is currently scheduled."
+  — replace that paragraph with the real show name/day/date/time once one
+  is booked, and add a matching `Event` JSON-LD block (see the HTML comment
+  directly above that section for what's expected).
 - JSON-LD blocks (`index.html`, `about.html`) — update `url`, `image`,
   `email` and `sameAs` (only with genuine profile URLs) once known.
 
@@ -251,10 +297,15 @@ WebP) and update the `poster="..."` attribute's extension.
 
 ### How to update social metrics
 
-Edit the `<p class="metric-value">[Current followers]</p>` lines in the
-"Live. Regularly." section of `index.html`, and update each social link's
-`href="#"` to the real profile URL. Never fabricate a number — leave the
-bracketed placeholder until real data is available.
+The homepage has no metrics section right now — it's commented out in
+`index.html` (search for "SOCIAL / AUDIENCE") rather than shown with
+placeholder numbers, per the brand rule that unverified figures are never
+displayed publicly. When real follower counts are available: uncomment that
+block, replace it with a `.grid.grid-5` of `.metric-card` elements (value in
+`.metric-value`, platform name in `.metric-platform`, real profile link),
+and update each social link's `href="#"` across the site to the real
+profile URL. Never fabricate a number — leave the section hidden until real
+data exists.
 
 ### How to update metadata
 
