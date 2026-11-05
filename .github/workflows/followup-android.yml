@@ -18,20 +18,18 @@ jobs:
       run:
         working-directory: app-android
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: app-android/package-lock.json
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
-
-      - uses: android-actions/setup-android@v3
 
       - name: Install and copy web app into the Android project
         run: |
@@ -56,6 +54,7 @@ jobs:
           FOLLOWUP_KEY_PASSWORD: ${{ secrets.FOLLOWUP_KEY_PASSWORD }}
           FOLLOWUP_VERSION_CODE: ${{ github.run_number }}
         run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew --no-daemon assembleRelease
           cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/FollowUp.apk"
