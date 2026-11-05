@@ -1,0 +1,27 @@
+{
+  "name": "Follow-Up: people I met",
+  "short_name": "Follow-Up",
+  "description": "Log people you meet at shows, tag them, and get reminded to follow up. Data stays on this phone.",
+  "id": "./",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Met someone", "short_name": "Add", "url": "./?add=1", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "All contacts", "short_name": "All", "url": "./?view=all", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  }
+}

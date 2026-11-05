@@ -3,5 +3,6 @@
 
 User-agent: *
 Allow: /
+Disallow: /connect/
 
 Sitemap: https://www.example.com/sitemap.xml

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Follow-Up</title>
+  <meta name="description" content="Private follow-up list for people met at shows. Data stays on this device." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0a0a0b" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <h1 class="brand">Follow<span class="accent">-</span>Up</h1>
+      <button class="btn btn-ghost btn-sm" id="myQrBtn" type="button">My QR</button>
+    </div>
+    <button class="event-pill" id="eventPill" type="button" aria-label="Change current event">
+      <span class="event-pill-label">At</span>
+      <span class="event-pill-name" id="eventPillName">No event set</span>
+      <span class="event-pill-edit" aria-hidden="true">Change</span>
+    </button>
+  </header>
+
+  <main id="main">
+    <!-- Due view -->
+    <section class="view" id="view-due" aria-labelledby="dueTitle">
+      <h2 class="visually-hidden" id="dueTitle">Due for follow-up</h2>
+      <div id="notifyBanner" class="banner" hidden>
+        <p>Get a phone notification when follow-ups are due.</p>
+        <button class="btn btn-sm" id="enableNotifyBtn" type="button">Turn on</button>
+      </div>
+      <div id="dueList"></div>
+    </section>
+
+    <!-- All contacts view -->
+    <section class="view" id="view-all" aria-labelledby="allTitle" hidden>
+      <h2 class="visually-hidden" id="allTitle">All contacts</h2>
+      <div class="filters">
+        <input type="search" id="searchInput" class="input" placeholder="Search name, note, tag, company…" autocomplete="off" />
+        <div class="filter-row">
+          <select id="eventFilter" class="input input-sm" aria-label="Filter by event"><option value="">All events</option></select>
+          <select id="statusFilter" class="input input-sm" aria-label="Filter by status">
+            <option value="">Any status</option>
+            <option value="new">New</option>
+            <option value="messaged">Messaged</option>
+            <option value="meeting">Meeting booked</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div id="allList"></div>
+    </section>
+
+    <!-- Settings view -->
+    <section class="view" id="view-settings" aria-labelledby="setTitle" hidden>
+      <h2 class="section-title" id="setTitle">Settings</h2>
+
+      <div class="card-block">
+        <label class="field">
+          <span class="field-label">Your LinkedIn profile URL</span>
+          <input type="url" id="myUrlInput" class="input" placeholder="https://www.linkedin.com/in/your-name" inputmode="url" />
+          <span class="field-hint">Used for "My QR" so people can scan you.</span>
+        </label>
+        <label class="field">
+          <span class="field-label">Your link for messages ({mylink})</span>
+          <input type="url" id="myLinkInput" class="input" placeholder="e.g. your EPK / website" inputmode="url" />
+        </label>
+        <label class="field">
+          <span class="field-label">Default follow-up</span>
+          <select id="defaultFollowInput" class="input">
+            <option value="1">Next day</option>
+            <option value="2">In 2 days</option>
+            <option value="3">In 3 days</option>
+            <option value="7">In 1 week</option>
+            <option value="0">No date</option>
+          </select>
+        </label>
+      </div>
+
+      <h3 class="sub-title">Message templates</h3>
+      <p class="muted small">Placeholders: {first} {name} {event} {company} {mylink}</p>
+      <div id="templatesEditor"></div>
+      <button class="btn btn-ghost btn-sm" id="addTemplateBtn" type="button">+ Add template</button>
+
+      <h3 class="sub-title">LinkedIn import</h3>
+      <p class="muted small">
+        On LinkedIn: <strong>Settings → Data privacy → Get a copy of your data → Connections</strong>.
+        When the email arrives, download it and choose the <code>Connections.csv</code> file here.
+        People you already scanned get their name, company and job title filled in. Connections you made
+        without scanning are added, so you can tag them.
+      </p>
+      <label class="btn btn-ghost btn-file">
+        Import Connections.csv
+        <input type="file" id="csvInput" accept=".csv,text/csv" hidden />
+      </label>
+
+      <h3 class="sub-title">Backup</h3>
+      <p class="muted small">Contacts are stored <strong>only on this phone</strong>. Export a backup now and then (save it to Drive or email it to yourself).</p>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="exportBtn" type="button">Export backup</button>
+        <label class="btn btn-ghost btn-file">
+          Restore backup
+          <input type="file" id="restoreInput" accept=".json,application/json" hidden />
+        </label>
+      </div>
+
+      <h3 class="sub-title">Danger zone</h3>
+      <button class="btn btn-danger" id="wipeBtn" type="button">Delete all contacts</button>
+
+      <p class="muted small footer-note" id="storageNote"></p>
+    </section>
+  </main>
+
+  <button class="fab" id="addBtn" type="button">
+    <span aria-hidden="true">+</span> Met someone
+  </button>
+
+  <nav class="tabbar" aria-label="Sections">
+    <button class="tab is-active" data-view="due" type="button">Due <span class="tab-count" id="dueCount" hidden></span></button>
+    <button class="tab" data-view="all" type="button">All</button>
+    <button class="tab" data-view="settings" type="button">Settings</button>
+  </nav>
+
+  <!-- Generic sheet (contact form / detail / message / event / my QR) -->
+  <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+    <div class="sheet-head">
+      <h2 id="sheetTitle" class="sheet-title"></h2>
+      <button class="btn btn-ghost btn-sm" id="sheetClose" type="button" aria-label="Close">Close</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+
+  <!-- Scanner overlay -->
+  <div class="scanner" id="scanner" hidden>
+    <video id="scanVideo" playsinline muted></video>
+    <canvas id="scanCanvas" hidden></canvas>
+    <div class="scan-frame" aria-hidden="true"></div>
+    <p class="scan-hint" id="scanHint">Point at their LinkedIn QR code</p>
+    <button class="btn" id="scanCancel" type="button">Cancel</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="vendor/qrcode.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
