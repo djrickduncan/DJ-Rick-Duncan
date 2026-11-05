@@ -1,0 +1,23 @@
+{
+  "name": "followup-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Android wrapper for the Follow-Up app in ../connect",
+  "scripts": {
+    "build": "node scripts/build-www.js",
+    "sync": "npm run build && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/app-launcher": "^8.0.1",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0"
+  }
+}

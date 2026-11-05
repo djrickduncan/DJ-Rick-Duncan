@@ -1,0 +1,14 @@
+{
+  "appId": "com.justdj.followup",
+  "appName": "Follow-Up",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0a0a0b"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_followup",
+      "iconColor": "#ee4236"
+    }
+  }
+}

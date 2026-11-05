@@ -95,6 +95,29 @@
     return null;
   }
 
+  // ---------------------------------------------------------------- native (Android app build)
+  // When packaged with Capacitor (see /app-android) these call native Android APIs.
+  // In the browser they fall back to web APIs.
+  const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const plug = (name) => (isNative && window.capacitorExports ? window.capacitorExports.registerPlugin(name) : null);
+  const Native = {
+    LN: plug('LocalNotifications'), Share: plug('Share'), FS: plug('Filesystem'), Launcher: plug('AppLauncher')
+  };
+  function openExternal(url) {
+    if (Native.Launcher) return Native.Launcher.openUrl({ url: url }).catch(() => { location.href = url; });
+    window.open(url, '_blank', 'noopener');
+  }
+  const canShare = () => isNative || 'share' in navigator;
+  async function shareText(text) {
+    if (Native.Share) return Native.Share.share({ text: text, dialogTitle: 'Send message' });
+    return navigator.share({ text: text });
+  }
+  function hashId(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+    return Math.abs(h) % 2000000000 + 1;
+  }
+
   // ---------------------------------------------------------------- IndexedDB
   const DB_NAME = 'followup', DB_VER = 1;
   let dbp;
@@ -138,7 +161,7 @@
     { id: 't2', name: 'With my link', body: 'Hi {first}, Rick here (Just:DJ). Good to connect at {event}. Here\'s my EPK as mentioned: {mylink}\n\nWhen would suit you to talk about working together?' },
     { id: 't3', name: 'Chase-up', body: 'Hi {first}, just bumping this. Still keen to arrange the meeting we talked about at {event}. What day works best for you?' }
   ];
-  const DEFAULT_SETTINGS = { myUrl: '', myLink: '', defaultFollow: 1, templates: DEFAULT_TEMPLATES };
+  const DEFAULT_SETTINGS = { myUrl: '', myLink: '', defaultFollow: 1, reminderTime: '09:00', templates: DEFAULT_TEMPLATES };
   const PRESET_TAGS = ['Promoter', 'Venue', 'Booking', 'Artist', 'Brand', 'Media', 'Hot lead'];
 
   let contacts = [];
@@ -273,6 +296,8 @@
     $('#myUrlInput').value = settings.myUrl || '';
     $('#myLinkInput').value = settings.myLink || '';
     $('#defaultFollowInput').value = String(settings.defaultFollow);
+    $('#reminderTimeField').hidden = !isNative;
+    $('#reminderTimeInput').value = settings.reminderTime || '09:00';
     $('#templatesEditor').innerHTML = settings.templates.map((t) =>
       '<div class="template-item" data-tid="' + esc(t.id) + '">' +
         '<input class="input input-sm tpl-name" value="' + esc(t.name) + '" aria-label="Template name" />' +
@@ -285,6 +310,7 @@
     renderDue();
     renderList();
     renderEventPill();
+    scheduleNativeReminders();
   }
 
   function showView(v) {
@@ -576,7 +602,7 @@
 
     $('#dMsg', body).onclick = () => openMessage(c.id);
     $('#dEdit', body).onclick = () => openForm(c);
-    $('#dCal', body).onclick = () => window.open(calendarUrl(c), '_blank', 'noopener');
+    $('#dCal', body).onclick = () => openExternal(calendarUrl(c));
     $('#dStatus', body).addEventListener('click', async (e) => {
       const b = e.target.closest('[data-status]'); if (!b || b.dataset.status === c.status) return;
       c.status = b.dataset.status;
@@ -640,7 +666,7 @@
       '<div class="btn-row" style="margin-top:6px">' +
         (c.url ? '<button class="btn btn-block" id="mGo" type="button">Copy &amp; open LinkedIn</button>' : '') +
         '<button class="btn btn-ghost" id="mCopy" type="button">Copy only</button>' +
-        ('share' in navigator ? '<button class="btn btn-ghost" id="mShare" type="button">Share…</button>' : '') +
+        (canShare() ? '<button class="btn btn-ghost" id="mShare" type="button">Share…</button>' : '') +
       '</div>' +
       '<div class="sheet-actions"><button class="btn btn-ghost" id="mBack" type="button">Back</button></div>');
 
@@ -663,14 +689,14 @@
     const go = $('#mGo', body);
     if (go) go.onclick = async () => {
       await copyText(text());
-      window.open(c.url, '_blank', 'noopener');
+      openExternal(c.url);
       await markSent('LinkedIn');
       openDetail(c.id);
     };
     $('#mCopy', body).onclick = async () => { await copyText(text()); toast('Copied'); };
     const sh = $('#mShare', body);
     if (sh) sh.onclick = async () => {
-      try { await navigator.share({ text: text() }); await markSent('shared'); openDetail(c.id); } catch (e) { /* cancelled */ }
+      try { await shareText(text()); await markSent('shared'); openDetail(c.id); } catch (e) { /* cancelled */ }
     };
     $('#mBack', body).onclick = () => openDetail(c.id);
   }
@@ -919,6 +945,14 @@
     const data = { app: 'followup', version: 1, exportedAt: new Date().toISOString(), settings, currentEvent, contacts };
     const name = 'followup-backup-' + today() + '.json';
     const json = JSON.stringify(data);
+    if (isNative) {
+      try {
+        const res = await Native.FS.writeFile({ path: name, data: json, directory: 'CACHE', encoding: 'utf8' });
+        await Native.Share.share({ title: 'Follow-Up backup', files: [res.uri], dialogTitle: 'Save backup to…' });
+        await kvSet('lastBackup', data.exportedAt);
+      } catch (e) { if (!/cancel/i.test(String(e && e.message))) toast('Backup failed: ' + (e && e.message || e)); }
+      return;
+    }
     const file = typeof File === 'function' ? new File([json], name, { type: 'application/json' }) : null;
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], title: 'Follow-Up backup' }); await kvSet('lastBackup', data.exportedAt); return; }
@@ -940,7 +974,44 @@
   }
 
   // ---------------------------------------------------------------- notifications
+  // Android app: one exact local notification per contact on its follow-up date.
+  let schedTimer;
+  function scheduleNativeReminders() {
+    if (!Native.LN) return;
+    clearTimeout(schedTimer);
+    schedTimer = setTimeout(async () => {
+      try {
+        const perm = await Native.LN.checkPermissions();
+        if (perm.display !== 'granted') return;
+        const pending = await Native.LN.getPending();
+        if (pending.notifications.length) await Native.LN.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
+        const [hh, mm] = (settings.reminderTime || '09:00').split(':').map(Number);
+        const now = Date.now();
+        const list = contacts.filter((c) => c.followUp && c.status !== 'done').map((c) => {
+          const at = parseYmd(c.followUp); at.setHours(hh, mm, 0, 0);
+          return { c: c, at: at };
+        }).filter((x) => x.at.getTime() > now).sort((a, b) => a.at - b.at).slice(0, 60);
+        if (!list.length) return;
+        await Native.LN.schedule({ notifications: list.map((x) => ({
+          id: hashId(x.c.id),
+          title: 'Follow up with ' + (x.c.name || 'someone'),
+          body: x.c.note || (x.c.event ? 'Met at ' + x.c.event : 'Tap to write a message'),
+          schedule: { at: x.at, allowWhileIdle: true },
+          extra: { cid: x.c.id }
+        })) });
+      } catch (e) { /* reminders are best-effort */ }
+    }, 400);
+  }
+
   async function setupReminders() {
+    if (Native.LN) {
+      const perm = await Native.LN.requestPermissions();
+      updateNotifyBanner();
+      if (perm.display !== 'granted') { toast('Notifications are off. Turn them on in Android Settings → Apps → Follow-Up.'); return; }
+      scheduleNativeReminders();
+      toast('Reminders on: you\'ll get a notification at ' + (settings.reminderTime || '09:00') + ' on each follow-up date.');
+      return;
+    }
     if (!('Notification' in window)) { toast('Notifications aren\'t supported here. Use "Add to calendar" on a contact.'); return; }
     const perm = await Notification.requestPermission();
     updateNotifyBanner();
@@ -959,7 +1030,13 @@
       return true;
     } catch (e) { return false; }
   }
-  function updateNotifyBanner() {
+  async function updateNotifyBanner() {
+    if (Native.LN) {
+      let granted = false;
+      try { granted = (await Native.LN.checkPermissions()).display === 'granted'; } catch (e) { /* ignore */ }
+      $('#notifyBanner').hidden = granted || !contacts.length;
+      return;
+    }
     $('#notifyBanner').hidden = !('Notification' in window) || Notification.permission !== 'default' || !contacts.length;
   }
 
@@ -974,7 +1051,8 @@
     const el = $('#storageNote');
     const last = await kvGet('lastBackup');
     let txt = contacts.length + ' contacts on this device.';
-    if (navigator.storage && navigator.storage.persisted) {
+    if (isNative) txt += ' Stored inside the app (uninstalling deletes them).';
+    else if (navigator.storage && navigator.storage.persisted) {
       try { txt += (await navigator.storage.persisted()) ? ' Storage is protected from automatic clearing.' : ' Tip: install the app so Android keeps the data safe.'; } catch (e) { /* ignore */ }
     }
     txt += last ? ' Last backup: ' + fmtDay(last) + '.' : ' No backup yet.';
@@ -1007,6 +1085,16 @@
     });
     $('#myLinkInput').addEventListener('change', async (e) => { settings.myLink = e.target.value.trim(); await saveSettings(); });
     $('#defaultFollowInput').addEventListener('change', async (e) => { settings.defaultFollow = Number(e.target.value); await saveSettings(); });
+    $('#reminderTimeInput').addEventListener('change', async (e) => { settings.reminderTime = e.target.value || '09:00'; await saveSettings(); scheduleNativeReminders(); });
+
+    // In the Android app, links to LinkedIn / phone / email open the right app.
+    if (isNative) {
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest('a[href]'); if (!a) return;
+        const href = a.getAttribute('href');
+        if (/^(https?:|tel:|mailto:)/i.test(href)) { e.preventDefault(); openExternal(a.href); }
+      });
+    }
     $('#templatesEditor').addEventListener('input', async (e) => {
       const item = e.target.closest('[data-tid]'); if (!item) return;
       const t = settings.templates.find((x) => x.id === item.dataset.tid); if (!t) return;
@@ -1053,7 +1141,13 @@
     updateNotifyBanner();
     updateStorageNote();
 
-    if ('serviceWorker' in navigator) {
+    if (Native.LN) {
+      Native.LN.addListener('localNotificationActionPerformed', (ev) => {
+        const cid = ev && ev.notification && ev.notification.extra && ev.notification.extra.cid;
+        if (cid) { showView('due'); openDetail(cid); }
+      });
+    }
+    if (!isNative && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(() => {
         if ('Notification' in window && Notification.permission === 'granted') registerPeriodicSync();
       }).catch(() => {});

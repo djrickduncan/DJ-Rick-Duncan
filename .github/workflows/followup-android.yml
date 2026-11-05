@@ -1,0 +1,78 @@
+name: Build Follow-Up Android app
+
+on:
+  push:
+    paths:
+      - 'connect/**'
+      - 'app-android/**'
+      - '.github/workflows/followup-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app-android/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install and copy web app into the Android project
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: Use private signing key if configured
+        env:
+          KEYSTORE_B64: ${{ secrets.FOLLOWUP_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/followup.keystore"
+            echo "FOLLOWUP_KEYSTORE=$RUNNER_TEMP/followup.keystore" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build signed APK
+        working-directory: app-android/android
+        env:
+          FOLLOWUP_KEYSTORE_PASSWORD: ${{ secrets.FOLLOWUP_KEYSTORE_PASSWORD }}
+          FOLLOWUP_KEY_ALIAS: ${{ secrets.FOLLOWUP_KEY_ALIAS }}
+          FOLLOWUP_KEY_PASSWORD: ${{ secrets.FOLLOWUP_KEY_PASSWORD }}
+          FOLLOWUP_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/FollowUp.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FollowUp-apk
+          path: FollowUp.apk
+
+      - name: Publish to the "Follow-Up Android app" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: followup-android
+          name: Follow-Up Android app
+          target_commitish: ${{ github.sha }}
+          make_latest: false
+          files: FollowUp.apk
+          body: |
+            Download **FollowUp.apk** on your Android phone and open it to install.
+            Built from `${{ github.ref_name }}` @ ${{ github.sha }} (build ${{ github.run_number }}).

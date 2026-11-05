@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Follow-Up</string>
+    <string name="title_activity_main">Follow-Up</string>
+    <string name="package_name">com.justdj.followup</string>
+    <string name="custom_url_scheme">com.justdj.followup</string>
+</resources>
