@@ -171,6 +171,11 @@
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let currentEvent = '';
   let currentView = 'due';
+  const tagFilter = new Set();      // tags the All list is filtered by (contact must have all of them)
+  const NO_TAGS = '\u0000untagged';
+  let selecting = false;
+  const selected = new Set();       // contact ids picked in Select mode
+  let visibleIds = [];              // ids currently shown in the All list
 
   const byId = (id) => contacts.find((c) => c.id === id);
   const bySlug = (slug) => slug && contacts.find((c) => c.slug === slug);
@@ -200,11 +205,14 @@
   }
 
   // ---------------------------------------------------------------- rendering
-  function contactCard(c, showDue) {
+  function contactCard(c, showDue, selectable) {
     const due = showDue ? dueInfo(c) : null;
     const sub = [c.role, c.company].filter(Boolean).join(' · ');
     const avatar = c.photo ? '<img src="' + esc(c.photo) + '" alt="" />' : esc(initials(c.name));
-    return '<button class="contact" type="button" data-id="' + esc(c.id) + '">' +
+    const isSel = selectable && selected.has(c.id);
+    return '<button class="contact' + (isSel ? ' is-selected' : '') + '" type="button" data-id="' + esc(c.id) + '"' +
+      (selectable ? ' aria-pressed="' + isSel + '"' : '') + '>' +
+      (selectable ? '<span class="check" aria-hidden="true">✓</span>' : '') +
       '<span class="avatar">' + avatar + '</span>' +
       '<span class="contact-main">' +
         '<span class="contact-name">' + esc(c.name || 'Unnamed') + ' <span class="status status-' + esc(c.status) + '">' + esc(STATUS[c.status] || c.status) + '</span></span>' +
@@ -268,6 +276,8 @@
     const list = contacts.filter((c) => {
       if (ev && c.event !== ev) return false;
       if (st && c.status !== st) return false;
+      if (tagFilter.has(NO_TAGS) && (c.tags || []).length) return false;
+      for (const t of tagFilter) { if (t !== NO_TAGS && !(c.tags || []).includes(t)) return false; }
       if (!q) return true;
       return [c.name, c.company, c.role, c.note, c.event, c.email, (c.tags || []).join(' ')]
         .join(' ').toLowerCase().includes(q);
@@ -282,12 +292,169 @@
         const count = list.filter((x) => ymd(new Date(x.createdAt)) === day).length;
         html += '<h3 class="group-head"><span>' + esc(fmtDay(day)) + (evs.length ? ' · ' + esc(evs.join(', ')) : '') + '</span><span>' + count + '</span></h3>';
       }
-      html += contactCard(c, true);
+      html += contactCard(c, true, selecting);
     });
+    visibleIds = list.map((c) => c.id);
+    $('#listCount').textContent = list.length + (list.length === 1 ? ' person' : ' people') +
+      (tagFilter.size ? ' tagged ' + Array.from(tagFilter).map((t) => t === NO_TAGS ? '(no tags)' : '"' + t + '"').join(' + ') : '');
+    $('#selectBtn').textContent = selecting ? 'Done' : 'Select';
+    renderTagFilter();
+    updateSelectBar();
     $('#allList').innerHTML = html || '<div class="empty"><strong>' + (contacts.length ? 'No matches' : 'No contacts yet') + '</strong></div>';
 
     const sel = $('#eventFilter'), cur = sel.value;
     sel.innerHTML = '<option value="">All events</option>' + knownEvents().map((e) => '<option' + (e === cur ? ' selected' : '') + '>' + esc(e) + '</option>').join('');
+  }
+
+  function renderTagFilter() {
+    const counts = new Map();
+    let untagged = 0;
+    contacts.forEach((c) => {
+      if (!(c.tags || []).length) untagged++;
+      (c.tags || []).forEach((t) => counts.set(t, (counts.get(t) || 0) + 1));
+    });
+    Array.from(tagFilter).forEach((t) => { if (t !== NO_TAGS && !counts.has(t)) tagFilter.delete(t); });
+    const tags = Array.from(counts.keys()).sort((a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b));
+    const chip = (val, label, n) => '<button type="button" class="chip' + (tagFilter.has(val) ? ' is-on' : '') + '" data-ftag="' + esc(val) + '">' +
+      esc(label) + '<span class="chip-count">' + n + '</span></button>';
+    $('#tagFilter').innerHTML = (tagFilter.size ? '<button type="button" class="chip chip-clear" data-ftag="">Clear</button>' : '') +
+      tags.map((t) => chip(t, t, counts.get(t))).join('') +
+      (untagged && contacts.length ? chip(NO_TAGS, 'No tags', untagged) : '');
+    $('#tagFilter').hidden = !tags.length && !untagged;
+  }
+
+  // ---------------------------------------------------------------- multi-select
+  function setSelecting(on, firstId, fromBack) {
+    if (on && !selecting) pushNav('select');
+    else if (!on && selecting && !fromBack) popNav('select');
+    selecting = on;
+    selected.clear();
+    if (on && firstId) selected.add(firstId);
+    document.body.classList.toggle('selecting', on);
+    $('#selectBar').hidden = !on;
+    renderList();
+  }
+  function updateSelectBar() {
+    if (!selecting) return;
+    const n = selected.size;
+    $('#selectCount').textContent = n + ' selected';
+    const allShown = visibleIds.length && visibleIds.every((id) => selected.has(id));
+    $('#selectAllBtn').textContent = allShown ? 'Select none' : 'Select all (' + visibleIds.length + ')';
+    $$('[data-bulk]').forEach((b) => { b.disabled = !n; b.style.opacity = n ? '' : '0.45'; });
+  }
+  function toggleSelected(id, card) {
+    if (selected.has(id)) selected.delete(id); else selected.add(id);
+    if (card) { card.classList.toggle('is-selected', selected.has(id)); card.setAttribute('aria-pressed', selected.has(id)); }
+    updateSelectBar();
+  }
+  const selectedContacts = () => contacts.filter((c) => selected.has(c.id));
+
+  async function saveMany(list, logText) {
+    const now = new Date().toISOString();
+    list.forEach((c) => { c.updatedAt = now; (c.log = c.log || []).push({ at: now, text: logText }); });
+    await dbPutMany(list);
+    renderAll();
+  }
+
+  function openBulkTag() {
+    const list = selectedContacts(); const n = list.length;
+    const counts = new Map();
+    list.forEach((c) => (c.tags || []).forEach((t) => counts.set(t, (counts.get(t) || 0) + 1)));
+    const add = new Set(), remove = new Set();
+    const addChips = () => knownTags().map((t) => '<button type="button" class="chip' + (add.has(t) ? ' is-on' : '') + '" data-add="' + esc(t) + '">' + esc(t) +
+      (counts.get(t) ? '<span class="chip-count">' + counts.get(t) + '/' + n + '</span>' : '') + '</button>').join('');
+    const body = openSheet('Tag ' + n + (n === 1 ? ' person' : ' people'),
+      '<div class="bulk-section"><label class="field" style="margin-bottom:6px"><span class="field-label">Create a new list</span>' +
+        '<input class="input" id="bNew" placeholder="e.g. Target: Ibiza promoters" autocapitalize="sentences" /></label>' +
+        '<span class="field-hint">Lists are tags: filter by it any time on the All tab.</span></div>' +
+      '<div class="bulk-section"><span class="field-label">Add to all ' + n + '</span><div class="chips" id="bAdd">' + addChips() + '</div></div>' +
+      (counts.size ? '<div class="bulk-section"><span class="field-label">Remove from all ' + n + '</span><div class="chips" id="bRemove">' +
+        Array.from(counts.keys()).map((t) => '<button type="button" class="chip" data-remove="' + esc(t) + '">' + esc(t) + '<span class="chip-count">' + counts.get(t) + '/' + n + '</span></button>').join('') +
+      '</div></div>' : '') +
+      '<div class="sheet-actions"><button class="btn btn-ghost" id="bCancel" type="button">Cancel</button><button class="btn" id="bApply" type="button">Apply</button></div>');
+    $('#bAdd', body).addEventListener('click', (e) => {
+      const b = e.target.closest('[data-add]'); if (!b) return;
+      const t = b.dataset.add; if (add.has(t)) add.delete(t); else { add.add(t); remove.delete(t); }
+      b.classList.toggle('is-on', add.has(t));
+      const r = $('[data-remove="' + CSS.escape(t) + '"]', body); if (r) r.classList.remove('is-on');
+    });
+    const rem = $('#bRemove', body);
+    if (rem) rem.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-remove]'); if (!b) return;
+      const t = b.dataset.remove; if (remove.has(t)) remove.delete(t); else { remove.add(t); add.delete(t); }
+      b.classList.toggle('is-on', remove.has(t));
+      const a = $('[data-add="' + CSS.escape(t) + '"]', body); if (a) a.classList.remove('is-on');
+    });
+    $('#bNew', body).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#bApply', body).click(); } });
+    $('#bCancel', body).onclick = closeSheet;
+    $('#bApply', body).onclick = async () => {
+      const fresh = $('#bNew', body).value.trim();
+      if (fresh) add.add(fresh);
+      if (!add.size && !remove.size) { toast('Pick a tag to add or remove'); return; }
+      list.forEach((c) => {
+        const set = new Set(c.tags || []);
+        add.forEach((t) => set.add(t)); remove.forEach((t) => set.delete(t));
+        c.tags = Array.from(set);
+      });
+      const parts = [];
+      if (add.size) parts.push('Tagged ' + Array.from(add).join(', '));
+      if (remove.size) parts.push('Removed tag ' + Array.from(remove).join(', '));
+      await saveMany(list, parts.join('; '));
+      closeSheet();
+      const showTag = fresh || (add.size === 1 ? Array.from(add)[0] : '');
+      setSelecting(false);
+      if (showTag) toast(parts.join('; ') + ' (' + n + ')', 'View list', () => { tagFilter.clear(); tagFilter.add(showTag); renderList(); window.scrollTo(0, 0); });
+      else toast(parts.join('; ') + ' (' + n + ')');
+    };
+    setTimeout(() => $('#bNew', body).focus(), 50);
+  }
+
+  function openBulkFollow() {
+    const list = selectedContacts(); const n = list.length;
+    const body = openSheet('Follow-up for ' + n + (n === 1 ? ' person' : ' people'),
+      '<div class="chips" id="bfChips">' + followChips(addDays(1)) + '</div>' +
+      '<input type="date" class="input" id="bfDate" value="' + addDays(1) + '" style="margin-top:10px" aria-label="Follow-up date" />' +
+      '<p class="muted small">Sets the same follow-up date for everyone selected. Choose None to clear it.</p>' +
+      '<div class="sheet-actions"><button class="btn btn-ghost" id="bfCancel" type="button">Cancel</button><button class="btn" id="bfApply" type="button">Set date</button></div>');
+    $('#bfChips', body).addEventListener('click', (e) => {
+      const b = e.target.closest('[data-follow]'); if (!b) return;
+      $('#bfDate', body).value = b.dataset.follow;
+      $$('[data-follow]', body).forEach((x) => x.classList.toggle('is-on', x === b));
+    });
+    $('#bfCancel', body).onclick = closeSheet;
+    $('#bfApply', body).onclick = async () => {
+      const d = $('#bfDate', body).value;
+      list.forEach((c) => { c.followUp = d; });
+      await saveMany(list, d ? 'Follow-up set for ' + fmtDay(d) : 'Follow-up cleared');
+      closeSheet(); setSelecting(false);
+      toast(d ? n + ' follow-ups set for ' + fmtDay(d) : 'Cleared ' + n + ' follow-ups');
+    };
+  }
+
+  function openBulkStatus() {
+    const list = selectedContacts(); const n = list.length;
+    const body = openSheet('Status for ' + n + (n === 1 ? ' person' : ' people'),
+      '<div class="btn-row" id="bsList" style="flex-direction:column">' +
+        Object.keys(STATUS).map((k) => '<button class="btn btn-ghost" type="button" data-st="' + k + '">' + STATUS[k] + '</button>').join('') +
+      '</div>');
+    $('#bsList', body).addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-st]'); if (!b) return;
+      list.forEach((c) => { c.status = b.dataset.st; });
+      await saveMany(list, 'Status: ' + STATUS[b.dataset.st]);
+      closeSheet(); setSelecting(false);
+      toast(n + ' marked ' + STATUS[b.dataset.st]);
+    });
+  }
+
+  async function bulkDelete() {
+    const list = selectedContacts(); const n = list.length;
+    if (!confirm('Delete ' + n + (n === 1 ? ' contact' : ' contacts') + '?')) return;
+    const copies = list.map((c) => Object.assign({}, c));
+    await tx('contacts', 'readwrite', (s) => { list.forEach((c) => s.delete(c.id)); });
+    const ids = new Set(list.map((c) => c.id));
+    contacts = contacts.filter((c) => !ids.has(c.id));
+    setSelecting(false); renderAll();
+    toast('Deleted ' + n, 'Undo', async () => { await dbPutMany(copies); contacts = contacts.concat(copies); renderAll(); });
   }
 
   function renderEventPill() {
@@ -320,6 +487,7 @@
     currentView = v;
     ['due', 'all', 'settings'].forEach((k) => { $('#view-' + k).hidden = k !== v; });
     $$('.tab').forEach((t) => t.classList.toggle('is-active', t.dataset.view === v));
+    if (v !== 'all' && selecting) setSelecting(false);
     $('#addBtn').hidden = v === 'settings';
     if (v === 'settings') renderSettings();
     window.scrollTo(0, 0);
@@ -348,7 +516,7 @@
       $('#sheetBackdrop').hidden = false;
       document.body.style.overflow = 'hidden';
       document.body.classList.add('sheet-open');
-      history.pushState({ sheet: true }, '');
+      pushNav('sheet');
     }
     return $('#sheetBody');
   }
@@ -362,13 +530,28 @@
   }
   function closeSheet() {
     if (!sheetOpen) return;
-    if (history.state && history.state.sheet) history.back(); else hideSheet();
+    hideSheet();
+    popNav('sheet');
   }
-  let skipPop = false;
+
+  // Android back button: each open layer (select mode, popup, scanner) adds a history
+  // entry, so "back" closes the top layer instead of leaving the app.
+  const navStack = [];
+  let skipPop = 0, pendingBack = 0;
+  function pushNav(kind) { navStack.push(kind); history.pushState({ nav: navStack.length }, ''); }
+  function popNav(kind) {
+    const i = navStack.lastIndexOf(kind); if (i < 0) return;
+    pendingBack += navStack.length - i;
+    navStack.length = i;
+    clearTimeout(popNav.t);
+    popNav.t = setTimeout(() => { const n = pendingBack; pendingBack = 0; if (n) { skipPop++; history.go(-n); } }, 0);
+  }
   window.addEventListener('popstate', () => {
-    if (skipPop) { skipPop = false; return; }
-    if (scanning) { stopScan(); return; }
-    if (sheetOpen) hideSheet();
+    if (skipPop) { skipPop--; return; }
+    const kind = navStack.pop();
+    if (kind === 'scan') stopScan();
+    else if (kind === 'sheet') hideSheet();
+    else if (kind === 'select') setSelecting(false, null, true);
   });
 
   // ---------------------------------------------------------------- contact form
@@ -745,7 +928,7 @@
     await video.play().catch(() => {});
     scanning = true;
     $('#scanner').hidden = false;
-    history.pushState({ scan: true }, '');
+    pushNav('scan');
     $('#scanHint').textContent = 'Point at their LinkedIn QR code';
     tick();
   }
@@ -782,7 +965,7 @@
 
   function endScan() {
     stopScan();
-    if (history.state && history.state.scan) { skipPop = true; history.back(); }
+    popNav('scan');
   }
 
   function stopScan() {
@@ -1075,7 +1258,56 @@
 
     const onListClick = (e) => { const b = e.target.closest('.contact'); if (b) openDetail(b.dataset.id); };
     $('#dueList').addEventListener('click', onListClick);
-    $('#allList').addEventListener('click', onListClick);
+    let suppressClick = false;
+    $('#allList').addEventListener('click', (e) => {
+      const b = e.target.closest('.contact'); if (!b) return;
+      if (suppressClick) { suppressClick = false; return; }
+      if (selecting) toggleSelected(b.dataset.id, b); else openDetail(b.dataset.id);
+    });
+    // Long-press a contact on the All tab to start selecting
+    let pressTimer = null, pressStart = null;
+    $('#allList').addEventListener('pointerdown', (e) => {
+      const b = e.target.closest('.contact'); if (!b || selecting) return;
+      pressStart = { x: e.clientX, y: e.clientY };
+      pressTimer = setTimeout(() => {
+        pressTimer = null; suppressClick = true;
+        if (navigator.vibrate) navigator.vibrate(30);
+        setSelecting(true, b.dataset.id);
+      }, 500);
+    });
+    const cancelPress = (e) => {
+      // A long-press may or may not be followed by a click (Android usually sends none),
+      // so only ignore a click that arrives straight after the finger lifts.
+      if (e.type === 'pointerup' && suppressClick) setTimeout(() => { suppressClick = false; }, 350);
+      if (!pressTimer) return;
+      if (e.type === 'pointermove' && pressStart && Math.hypot(e.clientX - pressStart.x, e.clientY - pressStart.y) < 10) return;
+      clearTimeout(pressTimer); pressTimer = null;
+    };
+    ['pointerup', 'pointercancel', 'pointermove'].forEach((ev) => $('#allList').addEventListener(ev, cancelPress));
+    $('#allList').addEventListener('contextmenu', (e) => { if (e.target.closest('.contact')) e.preventDefault(); });
+
+    $('#tagFilter').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-ftag]'); if (!b) return;
+      const t = b.dataset.ftag;
+      if (!t) tagFilter.clear();
+      else if (tagFilter.has(t)) tagFilter.delete(t);
+      else {
+        if (t === NO_TAGS) tagFilter.clear(); else tagFilter.delete(NO_TAGS);
+        tagFilter.add(t);
+      }
+      renderList();
+    });
+    $('#selectBtn').addEventListener('click', () => setSelecting(!selecting));
+    $('#selectDoneBtn').addEventListener('click', () => setSelecting(false));
+    $('#selectAllBtn').addEventListener('click', () => {
+      const allShown = visibleIds.length && visibleIds.every((id) => selected.has(id));
+      if (allShown) visibleIds.forEach((id) => selected.delete(id)); else visibleIds.forEach((id) => selected.add(id));
+      renderList();
+    });
+    $('#selectBar').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-bulk]'); if (!b || !selected.size) return;
+      ({ tag: openBulkTag, follow: openBulkFollow, status: openBulkStatus, delete: bulkDelete })[b.dataset.bulk]();
+    });
     $('#searchInput').addEventListener('input', renderList);
     $('#eventFilter').addEventListener('change', renderList);
     $('#statusFilter').addEventListener('change', renderList);

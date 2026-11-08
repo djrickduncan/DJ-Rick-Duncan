@@ -51,6 +51,11 @@
             <option value="done">Done</option>
           </select>
         </div>
+        <div class="tag-filter" id="tagFilter" role="group" aria-label="Filter by tag"></div>
+        <div class="list-bar">
+          <span id="listCount" class="muted small"></span>
+          <button class="btn btn-ghost btn-sm" id="selectBtn" type="button">Select</button>
+        </div>
       </div>
       <div id="allList"></div>
     </section>
@@ -123,6 +128,21 @@
   <button class="fab" id="addBtn" type="button">
     <span aria-hidden="true">+</span> Met someone
   </button>
+
+  <!-- Multi-select action bar (replaces the tab bar while selecting) -->
+  <div class="select-bar" id="selectBar" hidden>
+    <div class="select-bar-top">
+      <strong id="selectCount">0 selected</strong>
+      <button class="btn btn-ghost btn-sm" id="selectAllBtn" type="button">Select all</button>
+      <button class="btn btn-ghost btn-sm" id="selectDoneBtn" type="button">Cancel</button>
+    </div>
+    <div class="select-actions">
+      <button class="btn btn-sm" data-bulk="tag" type="button">Tag / list</button>
+      <button class="btn btn-ghost btn-sm" data-bulk="follow" type="button">Follow-up</button>
+      <button class="btn btn-ghost btn-sm" data-bulk="status" type="button">Status</button>
+      <button class="btn btn-danger btn-sm" data-bulk="delete" type="button">Delete</button>
+    </div>
+  </div>
 
   <nav class="tabbar" aria-label="Sections">
     <button class="tab is-active" data-view="due" type="button">Due <span class="tab-count" id="dueCount" hidden></span></button>

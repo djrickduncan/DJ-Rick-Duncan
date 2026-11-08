@@ -26,6 +26,14 @@ server and no LinkedIn login. The page's code is public on GitHub Pages, but you
 - **Add to calendar** creates a Google Calendar event for the follow-up date. Use it if you want
   a reminder that will definitely fire.
 
+## Lists, tags and bulk actions
+- **All** tab: tap tag chips under the filters to show only people with those tags. Pick several to
+  narrow down (they must have all of them). **No tags** shows people you haven't sorted yet.
+- Tap **Select**, or long-press a contact, to pick several people. Then use **Tag / list** to add or
+  remove tags, or create a new list (e.g. "Target: Ibiza promoters"). **Follow-up** gives everyone
+  the same date, **Status** changes them all, and **Delete** removes them (with undo).
+  **Select all** picks everyone currently shown, so you can filter first and then select.
+
 ## LinkedIn import (optional)
 LinkedIn → Settings → Data privacy → Get a copy of your data → Connections. Load
 `Connections.csv` in Settings. It fills in names and companies for people you scanned, and can

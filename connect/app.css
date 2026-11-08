@@ -152,7 +152,7 @@ textarea.input { min-height: 88px; resize: vertical; }
 }
 .banner p { margin: 0; font-size: 0.9rem; }
 
-.filters { position: sticky; top: 0; }
+.filters { position: static; }
 .filter-row { display: flex; gap: 8px; margin-top: 8px; }
 
 .section-title { font-size: 1.3rem; margin: 6px 0 14px; }
@@ -263,3 +263,38 @@ body.sheet-open .toast { bottom: calc(16px + var(--safe-b)); }
   .avatar-lg { width: 60px; height: 60px; font-size: 1.2rem; }
   .detail-name { font-size: 1.15rem; }
 }
+
+/* Tag filter + multi-select */
+.tag-filter { display: flex; gap: 6px; overflow-x: auto; margin: 10px -16px 0; padding: 2px 16px 4px; scrollbar-width: none; }
+.tag-filter::-webkit-scrollbar { display: none; }
+.tag-filter .chip { flex: none; white-space: nowrap; }
+.chip-count { opacity: 0.65; margin-left: 4px; font-weight: 400; }
+.chip-clear { color: var(--accent); border-color: var(--accent-dim); }
+.list-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.filters { background: var(--bg); z-index: 5; padding-bottom: 6px; }
+
+.contact .check {
+  flex: none; align-self: center; width: 24px; height: 24px; border-radius: 6px;
+  border: 2px solid var(--border-strong); display: grid; place-items: center; font-size: 15px; color: transparent;
+}
+.contact.is-selected { border-color: var(--accent); background: rgba(238, 66, 54, 0.08); }
+.contact.is-selected .check { background: var(--accent); border-color: var(--accent); color: #fff; }
+body.selecting .fab, body.selecting .tabbar { display: none; }
+body.selecting { padding-bottom: calc(130px + var(--safe-b)); }
+.select-bar {
+  position: fixed; z-index: 30; left: 0; right: 0; bottom: 0;
+  background: var(--bg-alt); border-top: 1px solid var(--border-strong);
+  padding: 10px 16px calc(12px + var(--safe-b));
+}
+.select-bar-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.select-bar-top strong { flex: 1; }
+.select-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.select-actions .btn { padding: 0 6px; white-space: normal; line-height: 1.1; font-size: 0.85rem; }
+.bulk-section { margin-bottom: 18px; }
+.bulk-section .chips { margin-top: 6px; }
+.contact-name, .contact-sub, .contact-note, .contact-meta { display: block; }
+.contact-name { display: flex; }
+.contact-meta { display: flex; }
+.contact-sub { max-width: 100%; }
+.fab { white-space: nowrap; }
+.list-bar span { min-width: 0; }
