@@ -1,19 +1,31 @@
 /* Follow-Up — private contact follow-up app. Matches the Just:DJ site palette. */
+@font-face { font-family: "Montserrat"; font-style: normal; font-weight: 400; font-display: swap; src: url("vendor/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Montserrat"; font-style: normal; font-weight: 500; font-display: swap; src: url("vendor/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Montserrat"; font-style: normal; font-weight: 600; font-display: swap; src: url("vendor/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Montserrat"; font-style: normal; font-weight: 700; font-display: swap; src: url("vendor/fonts/montserrat-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Montserrat"; font-style: normal; font-weight: 800; font-display: swap; src: url("vendor/fonts/montserrat-latin-800-normal.woff2") format("woff2"); }
+
+/* Brand: D1gitise palette (black, orange gradient, green accent) */
 :root {
-  --bg: #0a0a0b;
-  --bg-alt: #131315;
-  --bg-raised: #19191c;
-  --text: #f5f4f2;
-  --text-dim: #cfcdc9;
-  --muted: #8c8b8a;
-  --accent: #ee4236;
-  --accent-dim: #b6291f;
-  --ok: #3fb47a;
-  --warn: #e7a83a;
-  --border: #262628;
-  --border-strong: #3c3c40;
-  --radius: 10px;
-  --font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, "Segoe UI", Roboto, sans-serif;
+  --bg: #000000;
+  --bg-alt: #111111;
+  --bg-raised: #1b1b1b;
+  --text: #ffffff;
+  --text-dim: #d6d6d6;
+  --muted: #9a9a9a;
+  --accent: #f7931d;          /* brand orange */
+  --accent-dim: #d2421a;      /* brand red-orange */
+  --accent-yellow: #fcb80f;
+  --on-accent: #000000;       /* text on orange */
+  --grad: linear-gradient(90deg, #fcb80f 0%, #f7931d 45%, #d2421a 100%);
+  --ok: #6aa13d;              /* brand green */
+  --warn: #fcb80f;
+  --danger: #e2582a;
+  --border: #262626;
+  --border-strong: #3d3d3d;
+  --border-brand: rgba(247, 147, 29, 0.55);
+  --radius: 6px;
+  --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, "Segoe UI", Roboto, sans-serif;
   --tabbar-h: 60px;
   /* Safe areas: env() in browsers, --safe-area-inset-* injected by the Android app */
   --safe-t: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
@@ -45,7 +57,7 @@ code { font-size: 0.9em; background: var(--bg-raised); padding: 1px 5px; border-
 /* Top bar */
 .topbar {
   position: sticky; top: 0; z-index: 10;
-  background: rgba(10, 10, 11, 0.94);
+  background: rgba(0, 0, 0, 0.94);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   padding: calc(10px + var(--safe-t)) 16px 10px;
@@ -70,7 +82,7 @@ main { padding: 12px 16px; max-width: 720px; margin: 0 auto; }
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-height: 44px; padding: 0 18px;
   border-radius: var(--radius); border: 1px solid var(--accent);
-  background: var(--accent); color: #fff; font-weight: 600;
+  background: var(--accent); color: var(--on-accent); font-weight: 700;
   cursor: pointer; text-decoration: none; white-space: nowrap;
 }
 .btn:active { transform: translateY(1px); }
@@ -105,7 +117,7 @@ textarea.input { min-height: 88px; resize: vertical; }
 }
 .chip.is-on { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
 .tag { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: var(--bg-raised); border: 1px solid var(--border); color: var(--text-dim); }
-.tag-event { border-color: var(--accent-dim); color: #ffb3ad; }
+.tag-event { border-color: var(--border-brand); color: var(--accent); }
 
 /* Lists & cards */
 .group-head {
@@ -134,9 +146,9 @@ textarea.input { min-height: 88px; resize: vertical; }
 .contact-note { color: var(--muted); font-size: 0.86rem; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .contact-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .status { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; }
-.status-new { background: rgba(238, 66, 54, 0.15); color: #ff8a80; }
-.status-messaged { background: rgba(231, 168, 58, 0.15); color: var(--warn); }
-.status-meeting { background: rgba(63, 180, 122, 0.15); color: var(--ok); }
+.status-new { background: rgba(247, 147, 29, 0.16); color: var(--accent); }
+.status-messaged { background: rgba(252, 184, 15, 0.14); color: var(--warn); }
+.status-meeting { background: rgba(106, 161, 61, 0.18); color: #8cc25a; }
 .status-done { background: var(--bg-raised); color: var(--muted); }
 .due-badge { font-size: 0.75rem; color: var(--muted); }
 .due-badge.is-overdue { color: var(--accent); font-weight: 600; }
@@ -167,22 +179,22 @@ textarea.input { min-height: 88px; resize: vertical; }
   position: fixed; z-index: 20; left: 50%; transform: translateX(-50%);
   bottom: calc(var(--tabbar-h) + 14px + var(--safe-b));
   min-height: 54px; padding: 0 26px; border-radius: 999px; border: 0;
-  background: var(--accent); color: #fff; font-weight: 800; font-size: 1.05rem;
-  box-shadow: 0 8px 28px rgba(238, 66, 54, 0.35); cursor: pointer;
+  background: var(--grad); color: var(--on-accent); font-weight: 800; font-size: 1.05rem;
+  box-shadow: 0 8px 28px rgba(247, 147, 29, 0.35); cursor: pointer;
   display: flex; align-items: center; gap: 8px;
 }
 .fab span { font-size: 1.5rem; line-height: 1; }
 .tabbar {
   position: fixed; z-index: 20; left: 0; right: 0; bottom: 0;
   height: calc(var(--tabbar-h) + var(--safe-b)); padding-bottom: var(--safe-b);
-  display: flex; background: rgba(19, 19, 21, 0.97); border-top: 1px solid var(--border);
+  display: flex; background: rgba(17, 17, 17, 0.97); border-top: 1px solid var(--border);
 }
 .tab {
   flex: 1; border: 0; background: transparent; color: var(--muted);
   font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .tab.is-active { color: var(--text); box-shadow: inset 0 2px 0 var(--accent); }
-.tab-count { background: var(--accent); color: #fff; border-radius: 999px; font-size: 0.72rem; padding: 1px 7px; }
+.tab-count { background: var(--accent); color: var(--on-accent); font-weight: 700; border-radius: 999px; font-size: 0.72rem; padding: 1px 7px; }
 
 /* Sheet: full screen on phones so it always opens where you are; centred panel on wide screens */
 .sheet-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.6); }
@@ -211,7 +223,7 @@ textarea.input { min-height: 88px; resize: vertical; }
 
 .scan-btn {
   width: 100%; min-height: 64px; border-radius: var(--radius);
-  border: 1px dashed var(--accent); background: rgba(238, 66, 54, 0.08);
+  border: 1px dashed var(--accent); background: rgba(247, 147, 29, 0.08);
   color: var(--text); font-weight: 700; font-size: 1.05rem; cursor: pointer; margin-bottom: 14px;
 }
 .scan-result { font-size: 0.85rem; color: var(--ok); margin: -6px 0 12px; word-break: break-all; }
@@ -277,8 +289,8 @@ body.sheet-open .toast { bottom: calc(16px + var(--safe-b)); }
   flex: none; align-self: center; width: 24px; height: 24px; border-radius: 6px;
   border: 2px solid var(--border-strong); display: grid; place-items: center; font-size: 15px; color: transparent;
 }
-.contact.is-selected { border-color: var(--accent); background: rgba(238, 66, 54, 0.08); }
-.contact.is-selected .check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.contact.is-selected { border-color: var(--accent); background: rgba(247, 147, 29, 0.08); }
+.contact.is-selected .check { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 body.selecting .fab, body.selecting .tabbar { display: none; }
 body.selecting { padding-bottom: calc(130px + var(--safe-b)); }
 .select-bar {
@@ -298,3 +310,25 @@ body.selecting { padding-bottom: calc(130px + var(--safe-b)); }
 .contact-sub { max-width: 100%; }
 .fab { white-space: nowrap; }
 .list-bar span { min-width: 0; }
+
+/* ---- Brand styling (matches the D1gitise website) ---- */
+.grad-text, .section-title, .sub-title, .empty strong {
+  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+  width: fit-content; max-width: 100%;
+}
+.section-title, .sub-title { font-weight: 800; }
+h1, h2, h3, .detail-name, .sheet-title, .contact-name { letter-spacing: -0.01em; }
+.contact { border-color: rgba(247, 147, 29, 0.22); }
+.card-block, .template-item, .banner { border-color: var(--border-brand); }
+.event-pill { border-color: var(--border-brand); }
+.chip.is-on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+.tab.is-active { color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+.btn-danger { border-color: var(--danger); color: var(--danger); }
+.chip-clear { color: var(--danger); border-color: var(--danger); }
+.toast button { color: #b8350f; }
+.group-head.is-overdue, .due-badge.is-overdue { color: var(--danger); }
+.sheet-head { border-bottom-color: var(--border-brand); }
+.select-bar { border-top-color: var(--border-brand); }
+.tabbar { border-top-color: var(--border-brand); }
+.topbar { border-bottom-color: var(--border-brand); }
+.select-bar-top strong { white-space: nowrap; }

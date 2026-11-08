@@ -1,5 +1,5 @@
 /* Follow-Up service worker: offline app shell + daily "follow-ups due" reminder. */
-const CACHE = 'followup-v1';
+const CACHE = 'followup-v2';
 const SHELL = ['./', './index.html', './app.css', './app.js', './vendor/qrcode.js', './vendor/jsQR.js',
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 

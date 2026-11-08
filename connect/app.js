@@ -518,6 +518,8 @@
       document.body.classList.add('sheet-open');
       pushNav('sheet');
     }
+    // Reset after it is visible: a hidden element ignores scrollTop.
+    $('#sheetBody').scrollTop = 0;
     return $('#sheetBody');
   }
   function hideSheet() {

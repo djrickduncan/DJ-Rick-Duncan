@@ -3,12 +3,12 @@
   "appName": "Follow-Up",
   "webDir": "www",
   "android": {
-    "backgroundColor": "#0a0a0b"
+    "backgroundColor": "#000000"
   },
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_followup",
-      "iconColor": "#ee4236"
+      "iconColor": "#f7931d"
     },
     "SystemBars": {
       "insetsHandling": "css",
