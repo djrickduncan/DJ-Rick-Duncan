@@ -101,3 +101,29 @@ dialog::backdrop { background: rgba(0, 0, 0, .6); }
 .viewer h3 { margin: 0; }
 .notes li { padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 pre { white-space: pre-wrap; font: inherit; margin: 0; }
+
+select { font: inherit; color: var(--text); background: #0f0f15; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; flex: 1; min-width: 0; }
+.meters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.big-stat { background: #1b1b26; border-radius: 10px; padding: 10px; text-align: center; display: grid; gap: 2px; }
+.big-stat b { font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.big-stat span { font-size: 12px; color: var(--muted); }
+.bar-row { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 13px; color: var(--muted); margin: 6px 0; }
+.bar { height: 8px; background: #1f1f2b; border-radius: 99px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width .4s; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { padding: 3px 10px; border-radius: 99px; background: #1f1f2b; font-size: 13px; }
+
+.post-list { list-style: none; margin: 0; padding: 0; }
+.post-list li { background: #1b1b26; border-radius: 12px; padding: 12px; margin-bottom: 8px; animation: pop .25s ease-out; border-left: 4px solid var(--accent); }
+.post-list li.quick { border-left-color: var(--warn); }
+.post-list li.posted { opacity: .4; }
+.post-list .txt { font-size: 19px; line-height: 1.35; font-weight: 600; word-break: break-word; }
+.post-list .meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.post-list .meta div { display: flex; gap: 6px; }
+.post-list .copy { background: var(--accent); border-color: var(--accent); padding: 8px 16px; font-size: 15px; }
+.post-list .x { padding: 8px 12px; font-size: 15px; }
+.post-list .empty { border-left-color: var(--line); color: var(--muted); font-size: 15px; }
+.open-live { display: inline-block; color: var(--accent2); font-size: 14px; text-decoration: none; }
+.ideas { margin: 0; padding-left: 18px; }
+.ideas li { margin: 4px 0; }
+.card details { margin-top: 10px; }

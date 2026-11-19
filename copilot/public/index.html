@@ -25,34 +25,52 @@
   <main>
     <section id="connectBox" class="card">
       <form id="connectForm" class="row">
-        <input id="username" placeholder="TikTok username (no @)" autocomplete="off" autocapitalize="off" required>
-        <button type="submit" class="primary">Go live</button>
+        <input id="username" placeholder="TikTok username to watch (no @)" autocomplete="off" autocapitalize="off" required>
+        <button type="submit" class="primary">Start</button>
       </form>
       <p id="statusDetail" class="muted small"></p>
       <button id="stopBtn" class="ghost small hidden">End stream &amp; get report</button>
     </section>
 
-    <section class="card say">
+    <section class="card">
       <div class="card-head">
-        <h2>Say this</h2>
-        <span id="vibe" class="muted small"></span>
+        <h2>Post in chat</h2>
+        <a id="openLive" class="open-live" href="#" target="_blank" rel="noopener">Open the live ↗</a>
       </div>
-      <ul id="sayList" class="say-list"><li class="empty">Suggestions appear here once people join and chat.</li></ul>
-      <p id="trackFact" class="fact hidden"></p>
+      <p id="vibe" class="muted small"></p>
+      <ul id="postList" class="post-list"><li class="empty">Chat posts appear here as people join, chat and the music moves. Tap Copy, then paste into the live chat.</li></ul>
+    </section>
+
+    <section class="card say">
+      <div class="card-head"><h2>Say on the mic</h2></div>
+      <ul id="sayList" class="say-list"><li class="empty">Lines for the DJ show up here when a moment needs them.</li></ul>
+      <div id="ideasBox" class="hidden">
+        <p class="muted small">💡 From what you just said:</p>
+        <ul id="ideas" class="ideas"></ul>
+      </div>
     </section>
 
     <section class="card">
-      <h2>Now playing</h2>
-      <form id="trackForm" class="track-form">
-        <input id="trackTitle" placeholder="Track" required>
-        <input id="trackArtist" placeholder="Artist">
-        <input id="trackYear" placeholder="Year" inputmode="numeric" maxlength="4">
-        <button type="submit">Set</button>
-      </form>
-      <div class="row gap">
-        <button id="recogBtn" class="ghost hidden">🎵 Identify track</button>
-        <button id="micBtn" class="ghost">🎙️ Listen to my mic</button>
+      <div class="card-head">
+        <h2>The music</h2>
+        <span id="listenerState" class="muted small">Listener not running</span>
       </div>
+      <div class="meters">
+        <div class="big-stat"><b id="mBpm">–</b><span>BPM</span></div>
+        <div class="big-stat"><b id="mEnergy">–</b><span>energy</span></div>
+        <div class="big-stat"><b id="mGenre">–</b><span>sounds like</span></div>
+      </div>
+      <div id="mHearing" class="chips"></div>
+      <p id="musicNote" class="fact hidden"></p>
+      <details>
+        <summary class="muted small">Name the track (optional)</summary>
+        <form id="trackForm" class="track-form" style="margin-top:8px">
+          <input id="trackTitle" placeholder="Track" required>
+          <input id="trackArtist" placeholder="Artist">
+          <input id="trackYear" placeholder="Year" inputmode="numeric" maxlength="4">
+          <button type="submit">Set</button>
+        </form>
+      </details>
       <p id="nowPlaying" class="muted small"></p>
       <p id="micLine" class="muted small transcript"></p>
     </section>
@@ -60,10 +78,9 @@
     <section class="card">
       <h2>Ask your co-pilot</h2>
       <form id="askForm" class="row">
-        <input id="askInput" placeholder="e.g. give me a shout-out game for the next track" autocomplete="off">
+        <input id="askInput" placeholder="e.g. chat's dead, give me a game for the next track" autocomplete="off">
         <button type="submit">Ask</button>
       </form>
-      <ul id="replyList" class="reply-list"></ul>
     </section>
 
     <section class="card">
@@ -77,13 +94,15 @@
     </section>
 
     <details class="card">
-      <summary><h2>About me (helps the AI sound like you)</h2></summary>
+      <summary><h2>Settings: about you &amp; the crew account</h2></summary>
       <form id="profileForm" class="profile">
         <label>DJ name <input name="djName"></label>
-        <label>TikTok username <input name="tiktokUsername"></label>
-        <label>About you <textarea name="about" rows="3"></textarea></label>
+        <label>TikTok username being streamed <input name="tiktokUsername"></label>
+        <label>Crew account that posts the chat messages <input name="crewAccount" placeholder="e.g. rickscrew"></label>
+        <label>How the crew account talks <textarea name="crewStyle" rows="2"></textarea></label>
+        <label>About the DJ <textarea name="about" rows="3"></textarea></label>
         <label>Genres (comma separated) <input name="genres"></label>
-        <label>How you talk <textarea name="voice" rows="2"></textarea></label>
+        <label>How the DJ talks <textarea name="voice" rows="2"></textarea></label>
         <label>Catchphrases (comma separated) <input name="catchphrases"></label>
         <label>What to avoid <textarea name="avoid" rows="2"></textarea></label>
         <button type="submit">Save</button>

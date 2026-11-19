@@ -8,7 +8,7 @@ import { WebSocketServer } from 'ws';
 import { Store } from './lib/store.js';
 import { Brain } from './lib/brain.js';
 import { LiveSource } from './lib/tiktok.js';
-import { recognizeClip, recognitionEnabled } from './lib/recognize.js';
+import { MusicTracker } from './lib/music.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,6 +26,7 @@ const PIN = process.env.DASHBOARD_PIN || '';
 
 const store = new Store();
 const live = new LiveSource();
+const music = new MusicTracker();
 const sockets = new Set();
 
 function broadcast(type, payload) {
@@ -33,11 +34,25 @@ function broadcast(type, payload) {
   for (const ws of sockets) if (ws.readyState === 1) ws.send(msg);
 }
 
-const brain = new Brain(store, (sugg, source) => {
-  if (!sugg.say_now?.length && !sugg.chat_replies?.length && !sugg.track_fact) return;
+const brain = new Brain(store, music, (sugg, source) => {
+  if (!sugg.say_now?.length && !sugg.chat_posts?.length && !sugg.speech_ideas?.length && !sugg.music_note) return;
   store.suggestions = { ...sugg, at: Date.now(), source };
   broadcast('suggestions', store.suggestions);
 });
+
+// ---------- music analysis (from the Listener page) ----------
+music.on('moment', (m, urgent) => {
+  const entry = store.pushFeed({ type: 'music', text: m.text });
+  broadcast('feed', entry);
+  brain.note({ kind: 'music', musicKind: m.kind, text: m.text, urgent, instant: urgent });
+});
+let lastMusicBroadcast = 0;
+function broadcastMusic() {
+  if (Date.now() - lastMusicBroadcast < 1500) return;
+  lastMusicBroadcast = Date.now();
+  broadcast('music', { state: music.state, summary: music.summary() });
+}
+music.on('state', broadcastMusic);
 
 // ---------- TikTok events -> state + brain ----------
 live.on('status', (status, detail) => {
@@ -122,7 +137,7 @@ app.use('/api', (req, res, next) => {
 });
 
 app.get('/api/state', (req, res) =>
-  res.json({ ...store.snapshot(), features: { claude: brain.enabled, recognition: recognitionEnabled(), demo: process.env.DEMO === '1', brainError: brain.lastError } }),
+  res.json({ ...store.snapshot(), music: { state: music.state, summary: music.summary() }, features: { claude: brain.enabled, listener: music.connected, demo: process.env.DEMO === '1', brainError: brain.lastError } }),
 );
 
 app.post('/api/connect', async (req, res) => {
@@ -131,6 +146,7 @@ app.post('/api/connect', async (req, res) => {
   broadcast('reset', store.snapshot());
   try {
     await live.connect(username);
+    if (process.env.DEMO === '1') music.startDemo();
     res.json({ ok: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -154,22 +170,18 @@ app.post('/api/now-playing', (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/recognize', express.raw({ type: () => true, limit: '3mb' }), async (req, res) => {
-  try {
-    const track = await recognizeClip(req.body, req.get('content-type') || 'audio/webm');
-    if (!track) return res.json({ ok: false, error: "Couldn't recognise that one" });
-    const changed = store.setNowPlaying(track);
-    broadcast('nowPlaying', { nowPlaying: store.nowPlaying, trackHistory: store.trackHistory.slice(-10) });
-    if (changed) brain.note({ kind: 'track_change', text: `${track.artist} - ${track.title} (${track.year})`, urgent: true });
-    res.json({ ok: true, track });
-  } catch (err) {
-    res.status(400).json({ ok: false, error: err.message });
-  }
+app.post('/api/music', (req, res) => {
+  music.update(req.body || {});
+  broadcastMusic();
+  res.json({ ok: true });
 });
 
 app.post('/api/transcript', (req, res) => {
-  store.addTranscript(req.body?.text);
-  brain.note({ kind: 'dj_spoke', text: String(req.body?.text || '').slice(0, 300) });
+  const text = String(req.body?.text || '').trim().slice(0, 300);
+  if (!text) return res.json({ ok: true });
+  store.addTranscript(text);
+  brain.note({ kind: 'dj_spoke', text });
+  broadcast('transcript', { text });
   res.json({ ok: true });
 });
 
@@ -192,6 +204,7 @@ app.put('/api/profile', (req, res) => {
   res.json({ ok: true, profile: store.profile });
 });
 
+app.use('/vendor/mediapipe', express.static(path.join(here, 'node_modules', '@mediapipe', 'tasks-audio')));
 app.use(express.static(path.join(here, 'public')));
 
 const server = http.createServer(app);
@@ -204,9 +217,10 @@ wss.on('connection', (ws, req) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n🎧 DJ Co-Pilot running → http://localhost:${PORT}`);
+  console.log(`\n🎧 DJ Co-Pilot running`);
+  console.log(`   Phone dashboard:  http://<this-computer's-IP>:${PORT}   (same Wi-Fi)`);
+  console.log(`   Listener (open on THIS computer): http://localhost:${PORT}/listen.html`);
   console.log(`   Claude suggestions: ${brain.enabled ? 'ON' : 'OFF (set ANTHROPIC_API_KEY; using simple templates)'}`);
-  console.log(`   Song recognition:   ${recognitionEnabled() ? 'ON' : 'off (optional AUDD_API_TOKEN)'}`);
   if (process.env.DEMO === '1') console.log('   DEMO MODE: fake viewers, nothing connects to TikTok');
   if (!PIN) console.log('   Tip: set DASHBOARD_PIN if this is reachable from the internet.');
 });

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0b10">
+  <title>Co-Pilot Listener</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">🎧 Listener</div>
+    <div class="stats"><span id="pill" class="pill idle">off</span></div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Music</h2>
+      <p class="muted small">Pick the input that carries your mix: your DJ controller/mixer, a virtual cable from OBS, “Stereo Mix”, or a mic near the speakers.</p>
+      <div class="row">
+        <select id="device"><option value="">Default input</option></select>
+        <button id="musicBtn" class="primary">Start listening</button>
+      </div>
+      <p id="musicStatus" class="muted small"></p>
+      <div class="meters">
+        <div class="big-stat"><b id="bpm">–</b><span>BPM</span></div>
+        <div class="big-stat"><b id="genre">–</b><span id="mood">sound</span></div>
+        <div class="big-stat"><b id="section">–</b><span>section</span></div>
+      </div>
+      <div class="bar-row"><span>Energy</span><div class="bar"><i id="energyBar"></i></div></div>
+      <div class="bar-row"><span>Bass</span><div class="bar"><i id="bassBar"></i></div></div>
+      <div id="instBars"></div>
+    </section>
+
+    <section class="card">
+      <h2>Your voice</h2>
+      <p class="muted small">Transcribes what you say on the mic (uses this computer's default microphone), so your co-pilot can turn your stories into chat ideas. Works in Chrome or Edge.</p>
+      <button id="speechBtn">🎙️ Transcribe my mic</button>
+      <p id="speechLine" class="muted small transcript"></p>
+    </section>
+
+    <p class="muted small center">Keep this tab open while you stream. Open the dashboard on your phone: <b id="dashUrl"></b></p>
+  </main>
+  <script type="module" src="listen.js"></script>
+</body>
+</html>

@@ -1,56 +1,68 @@
 # 🎧 DJ Co-Pilot
 
-A second-screen assistant for DJ Rick Duncan's TikTok LIVEs. You stream from the TikTok app on your phone as normal. The co-pilot watches your live, then tells you **what to say next**, so every viewer gets a real, personal welcome from you.
+An engagement co-pilot for DJ Rick Duncan's TikTok LIVEs.
 
-It **never** logs into TikTok, posts, likes, taps or shares. It only reads your public live (by username), so your account is safe.
+- **The stream** runs as normal from the computer through OBS.
+- **The Listener** runs in a browser tab on that same computer. It hears the mix and your mic.
+- **The phone** is the engagement screen. It shows ready-to-post chat messages for your crew account (for example, `@rickscrew`), and lines for you to say on the mic.
+
+It never logs into TikTok, and it never posts, likes, taps or shares by itself. It reads your public live by username only. Whoever holds the phone copies each message and posts it from the crew account. That keeps every message a real person's choice, and keeps both accounts safe.
 
 ## What it does
 
-- **Greets people by name.** Shows who just joined and whether they're new or a regular ("Sarah, 5th stream"), with a welcome line ready to say.
-- **Remembers your regulars.** Tracks every viewer across streams. Tap a name to add notes ("from Hull, loves garage"). The AI also picks up things people say about themselves.
-- **Knows the music.** Type in the track (or tap *Identify track* if song recognition is on). You get memory prompts and true facts about it ("who was at an under-18s disco when this dropped?").
-- **Listens to you.** Tap *Listen to my mic* and it follows what you're saying, so suggestions build on your conversation.
-- **Keeps the chat going.** Answers questions first, thanks gifts/follows/shares by name, and nudges you with a fun prompt when chat goes quiet.
-- **Ready-to-paste chat replies.** Copy and paste them into your live chat yourself.
-- **Post-stream debrief.** Tap *End stream* for stats plus an AI write-up: which tracks got people talking, who to shout out next time, ideas for the next stream.
+- **Hears the music.** Using an on-device Google sound model, it works out tempo (BPM), energy, bass, breakdowns and drops, and what can be heard: piano, vocals, guitar, synth, strings, horns, crowd noise. It also tells broad styles apart, such as house, techno, soul, disco and hip hop.
+- **Reacts to musical moments.** A piano break → "hands in the air 🙌🎹". A breakdown → "hold tight… 👀". The drop → 💥. Vocals coming in → "who knows the words? 🎤". Instant chat posts appear straight away, then richer AI ones follow.
+- **Uses what you say.** It transcribes your mic. If you mention a place, a year, a club or a story, it turns that into chat posts and ideas ("Rick's on about Ayia Napa 2001, who else was there? 🌴").
+- **Welcomes people by name.** It knows who's new and who's a regular ("welcome back @sarah_k"), using notes it remembers across streams.
+- **Keeps the chat alive.** It thanks gifts, follows and shares, answers questions, and suggests a game when chat goes quiet. It asks for shares only now and then, never for gifts.
+- **Gives you a debrief after the stream.** Stats, musical moments, regulars, and ideas for next time.
 
-## Set-up (about 10 minutes, once)
+## Set-up (once)
 
-You need a laptop/PC (Windows, Mac or Linux) with **Node.js 20+** (https://nodejs.org).
+On the **streaming computer** (needs Node.js 20+, from https://nodejs.org):
 
 ```bash
 cd copilot
 npm install
-cp .env.example .env      # then open .env and paste your Claude API key
+cp .env.example .env      # paste your Claude API key in here, and set a DASHBOARD_PIN
 npm start
 ```
 
-Open **http://localhost:3000**, fill in *About me* once, and you're set.
-
-**Try it without going live:** `npm run demo` fills the dashboard with pretend viewers.
+**Try it first without going live:** `npm run demo` (pretend viewers and a pretend track).
 
 ## On stream night
 
-1. Go live on TikTok from your phone as usual.
-2. On the laptop, open the co-pilot, check your username, and tap **Go live**. (If you're not live yet, it keeps checking every 20 s.)
-3. Keep the laptop (or a tablet) where you can see it. Read the big **Say this** cards out loud, in your own words. Tap **Done ✓** when you've said one.
-4. Update **Now playing** when you change track (track name is enough; artist and year help).
-5. Tap **End stream & get report** when you finish.
+1. **Start OBS and go live** as usual.
+2. **On the computer**, open **http://localhost:3000/listen.html** in Chrome or Edge:
+   - Choose the input that carries your mix: your DJ controller/mixer input, a virtual audio cable from OBS (e.g. VB-Cable), "Stereo Mix", or just a mic near the speakers. Then tap **Start listening**.
+   - Tap **Transcribe my mic** (uses the computer's default mic).
+   - Leave the tab open.
+3. **On the phone** (same Wi-Fi), open `http://<computer's IP>:3000`, enter the PIN, and tap **Start**. Tip: *Share → Add to Home Screen* makes it open like an app, and the screen stays awake while it's open.
+4. On the phone, have TikTok open on your live, logged in as the **crew account**. When a good post appears, tap **Copy**, switch to TikTok and paste. **Open the live ↗** jumps straight there.
+5. When you're done, tap **End stream & get report**.
 
-### Using a second phone or tablet as the screen
+Fill in **Settings** on the phone once: the crew account name, how it talks, and a bit about you. The AI uses it to sound right.
 
-Open `http://<your-laptop-ip>:3000` on the second device (same Wi-Fi), then tap *Share → Add to Home Screen* to install it like an app. Set `DASHBOARD_PIN` in `.env` first.
+### Phone not on the same Wi-Fi?
 
-Browsers only allow the mic on `localhost` or HTTPS. So run **Listen to my mic** / **Identify track** on the laptop itself, or host the co-pilot somewhere with HTTPS (Render, Railway or Fly.io all work: set the same values from `.env` as environment variables there).
+Run a free Cloudflare tunnel on the computer to get a secure web address for the phone:
+`cloudflared tunnel --url http://localhost:3000` (install from https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/). Always set `DASHBOARD_PIN` when you do this.
 
-> Don't run the co-pilot on the phone you're streaming from. TikTok needs that phone's mic and screen.
+## Settings (`.env`)
 
-## Costs
+| Setting | What it does |
+|---|---|
+| `ANTHROPIC_API_KEY` | Turns on the AI. Without it you get simple built-in posts. |
+| `DASHBOARD_PIN` | Locks the dashboard. |
+| `TIKTOK_SIGN_API_KEY` | Optional free key (eulerstream.com) that makes connecting to TikTok more reliable. |
+| `CLAUDE_EFFORT` | `high` (default) gives rich, natural posts. `medium` or `low` are quicker. |
+| `SUGGEST_MIN_GAP_MS` | Minimum gap between AI updates (default 12 s). |
 
-- **Claude API:** pay-as-you-go. Updates are batched (at most one every ~9 s), so a 2-hour stream is typically a few dollars at most. Set `CLAUDE_EFFORT` or `CLAUDE_MODEL` in `.env` to tune speed and cost. Without a key, it still works with simple built-in prompts.
-- **AudD song recognition:** optional, has a free trial.
+**Cost:** Claude is pay-as-you-go. The rich setting with updates every ~12 s typically costs a few pounds for a 2-hour stream, depending on how busy it is. The music analysis runs on your computer and is free.
 
 ## Good to know
 
-- The TikTok connection uses the unofficial `tiktok-live-connector` library, which reads the same public events your viewers see. TikTok occasionally changes things. If it stops connecting, run `npm update tiktok-live-connector`, and consider adding a free `TIKTOK_SIGN_API_KEY`.
-- Viewer memory is stored on your laptop in `data/viewers.json`; debriefs go in `data/reports/`. Neither is uploaded anywhere except what's sent to Claude to write suggestions.
+- Only numbers (tempo, energy, instruments) and your transcribed words leave the Listener, never audio.
+- The TikTok connection uses the unofficial `tiktok-live-connector` library. If TikTok changes something and it stops connecting, run `npm update tiktok-live-connector`.
+- Viewer memory lives in `data/viewers.json` and debriefs in `data/reports/`, both on your computer.
+- Keep the crew account clearly labelled as Rick's crew (in its name or bio). Post at a natural pace, so it stays a host in the chat rather than spam.

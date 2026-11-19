@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",
+    "@mediapipe/tasks-audio": "1.2.2",
     "express": "^5.3.0",
     "tiktok-live-connector": "^2.5.0",
     "ws": "^8.23.0"
