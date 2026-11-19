@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>DJ Co-Pilot</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">🎧 Co-Pilot</div>
+    <div class="stats">
+      <span id="statusPill" class="pill idle">offline</span>
+      <span class="stat">👀 <b id="viewers">0</b></span>
+      <span class="stat">💬 <b id="chats">0</b></span>
+    </div>
+  </header>
+
+  <main>
+    <section id="connectBox" class="card">
+      <form id="connectForm" class="row">
+        <input id="username" placeholder="TikTok username (no @)" autocomplete="off" autocapitalize="off" required>
+        <button type="submit" class="primary">Go live</button>
+      </form>
+      <p id="statusDetail" class="muted small"></p>
+      <button id="stopBtn" class="ghost small hidden">End stream &amp; get report</button>
+    </section>
+
+    <section class="card say">
+      <div class="card-head">
+        <h2>Say this</h2>
+        <span id="vibe" class="muted small"></span>
+      </div>
+      <ul id="sayList" class="say-list"><li class="empty">Suggestions appear here once people join and chat.</li></ul>
+      <p id="trackFact" class="fact hidden"></p>
+    </section>
+
+    <section class="card">
+      <h2>Now playing</h2>
+      <form id="trackForm" class="track-form">
+        <input id="trackTitle" placeholder="Track" required>
+        <input id="trackArtist" placeholder="Artist">
+        <input id="trackYear" placeholder="Year" inputmode="numeric" maxlength="4">
+        <button type="submit">Set</button>
+      </form>
+      <div class="row gap">
+        <button id="recogBtn" class="ghost hidden">🎵 Identify track</button>
+        <button id="micBtn" class="ghost">🎙️ Listen to my mic</button>
+      </div>
+      <p id="nowPlaying" class="muted small"></p>
+      <p id="micLine" class="muted small transcript"></p>
+    </section>
+
+    <section class="card">
+      <h2>Ask your co-pilot</h2>
+      <form id="askForm" class="row">
+        <input id="askInput" placeholder="e.g. give me a shout-out game for the next track" autocomplete="off">
+        <button type="submit">Ask</button>
+      </form>
+      <ul id="replyList" class="reply-list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Live feed</h2>
+      <ul id="feed" class="feed"></ul>
+    </section>
+
+    <section class="card">
+      <h2>In the room <span id="roomCount" class="muted small"></span></h2>
+      <ul id="room" class="room"></ul>
+    </section>
+
+    <details class="card">
+      <summary><h2>About me (helps the AI sound like you)</h2></summary>
+      <form id="profileForm" class="profile">
+        <label>DJ name <input name="djName"></label>
+        <label>TikTok username <input name="tiktokUsername"></label>
+        <label>About you <textarea name="about" rows="3"></textarea></label>
+        <label>Genres (comma separated) <input name="genres"></label>
+        <label>How you talk <textarea name="voice" rows="2"></textarea></label>
+        <label>Catchphrases (comma separated) <input name="catchphrases"></label>
+        <label>What to avoid <textarea name="avoid" rows="2"></textarea></label>
+        <button type="submit">Save</button>
+      </form>
+    </details>
+    <p id="features" class="muted small center"></p>
+  </main>
+
+  <dialog id="viewerDlg">
+    <form method="dialog" class="viewer">
+      <h3 id="vdName"></h3>
+      <p id="vdStats" class="muted small"></p>
+      <ul id="vdNotes" class="notes"></ul>
+      <div class="row">
+        <input id="vdNote" placeholder="Add a note (e.g. from Hull, loves garage)">
+        <button id="vdAdd" value="add">Add</button>
+      </div>
+      <button value="close" class="ghost">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="reportDlg">
+    <form method="dialog" class="viewer">
+      <h3>Stream debrief</h3>
+      <pre id="reportText"></pre>
+      <button value="close">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="pinDlg">
+    <form id="pinForm" method="dialog" class="viewer">
+      <h3>Enter PIN</h3>
+      <input id="pinInput" type="password" inputmode="numeric" autocomplete="current-password">
+      <button>Unlock</button>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
