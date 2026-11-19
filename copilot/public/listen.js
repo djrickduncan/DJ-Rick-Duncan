@@ -4,18 +4,20 @@
 import { FilesetResolver, AudioClassifier } from './vendor/mediapipe/audio_bundle.mjs';
 
 const $ = (id) => document.getElementById(id);
-let pin = '';
-try { pin = localStorage.getItem('copilot.pin') || ''; } catch { /* private mode */ }
+let pin = '', base = '';
+try { pin = localStorage.getItem('copilot.pin') || ''; base = (localStorage.getItem('copilot.server') || '').replace(/\/+$/, ''); } catch { /* private mode */ }
+const NATIVE = Boolean(window.Capacitor?.isNativePlatform?.());
 
 async function post(path, body) {
-  const res = await fetch(`api/${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-pin': pin }, body: JSON.stringify(body) });
+  const res = await fetch(base ? `${base}/api/${path}` : `api/${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-pin': pin }, body: JSON.stringify(body) });
   if (res.status === 401) {
     pin = prompt('Dashboard PIN') || '';
     try { localStorage.setItem('copilot.pin', pin); } catch { /* ignore */ }
   }
 }
 
-$('dashUrl').textContent = location.hostname === 'localhost' ? `http://<this computer's IP>:${location.port || 80}` : location.origin;
+if (NATIVE) $('dashHint').classList.add('hidden');
+else $('dashUrl').textContent = location.hostname === 'localhost' ? `http://<this computer's IP>:${location.port || 80}` : location.origin;
 
 // ---------- sound classes (Google YAMNet / AudioSet labels) ----------
 const GROUPS = {
@@ -243,7 +245,7 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null, speechOn = false;
 $('speechBtn').addEventListener('click', () => (speechOn ? stopSpeech() : startSpeech()));
 function startSpeech() {
-  if (!SR) { $('speechLine').textContent = 'This browser has no speech recognition. Use Chrome or Edge.'; return; }
+  if (!SR) { $('speechLine').textContent = NATIVE ? 'Voice transcription runs on the computer: open the Listener there in Chrome.' : 'This browser has no speech recognition. Use Chrome or Edge.'; return; }
   rec = new SR();
   rec.continuous = true;
   rec.interimResults = true;

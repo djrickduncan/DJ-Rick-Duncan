@@ -127,3 +127,6 @@ select { font: inherit; color: var(--text); background: #0f0f15; border: 1px sol
 .ideas { margin: 0; padding-left: 18px; }
 .ideas li { margin: 4px 0; }
 .card details { margin-top: 10px; }
+.toggle { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.toggle input { width: 18px; height: 18px; }
+.viewer label { display: grid; gap: 4px; }

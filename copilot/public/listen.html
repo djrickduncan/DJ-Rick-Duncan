@@ -11,12 +11,12 @@
 <body>
   <header class="top">
     <div class="brand">🎧 Listener</div>
-    <div class="stats"><span id="pill" class="pill idle">off</span></div>
+    <div class="stats"><a href="index.html" class="open-live">← Dashboard</a><span id="pill" class="pill idle">off</span></div>
   </header>
   <main>
     <section class="card">
       <h2>Music</h2>
-      <p class="muted small">Pick the input that carries your mix: your DJ controller/mixer, a virtual cable from OBS, “Stereo Mix”, or a mic near the speakers.</p>
+      <p class="muted small">On the computer, pick the input that carries your mix: your DJ controller/mixer, a virtual cable from OBS, “Stereo Mix”, or a mic near the speakers.</p>
       <div class="row">
         <select id="device"><option value="">Default input</option></select>
         <button id="musicBtn" class="primary">Start listening</button>
@@ -39,7 +39,7 @@
       <p id="speechLine" class="muted small transcript"></p>
     </section>
 
-    <p class="muted small center">Keep this tab open while you stream. Open the dashboard on your phone: <b id="dashUrl"></b></p>
+    <p id="dashHint" class="muted small center">Keep this tab open while you stream. Open the dashboard on your phone: <b id="dashUrl"></b></p>
   </main>
   <script type="module" src="listen.js"></script>
 </body>

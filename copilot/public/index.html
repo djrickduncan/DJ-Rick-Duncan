@@ -37,6 +37,7 @@
         <h2>Post in chat</h2>
         <a id="openLive" class="open-live" href="#" target="_blank" rel="noopener">Open the live ↗</a>
       </div>
+      <label id="appOnly" class="muted small toggle hidden"><input type="checkbox" id="jumpToggle"> Jump to TikTok after Copy</label>
       <p id="vibe" class="muted small"></p>
       <ul id="postList" class="post-list"><li class="empty">Chat posts appear here as people join, chat and the music moves. Tap Copy, then paste into the live chat.</li></ul>
     </section>
@@ -72,6 +73,7 @@
         </form>
       </details>
       <p id="nowPlaying" class="muted small"></p>
+      <a class="open-live" href="listen.html">🎧 Listen with this phone instead</a>
       <p id="micLine" class="muted small transcript"></p>
     </section>
 
@@ -107,6 +109,7 @@
         <label>What to avoid <textarea name="avoid" rows="2"></textarea></label>
         <button type="submit">Save</button>
       </form>
+      <button id="changeServer" type="button" class="ghost small" style="margin-top:10px">Change computer address / PIN</button>
     </details>
     <p id="features" class="muted small center"></p>
   </main>
@@ -129,6 +132,17 @@
       <h3>Stream debrief</h3>
       <pre id="reportText"></pre>
       <button value="close">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="serverDlg">
+    <form id="serverForm" class="viewer">
+      <h3>Connect to your computer</h3>
+      <p class="muted small">Start the co-pilot on the streaming computer (<b>npm start</b>). It prints an address like <b>192.168.1.20:3000</b>. Type it here. Your phone must be on the same Wi-Fi.</p>
+      <label class="muted small">Computer address <input id="serverAddr" placeholder="192.168.1.20:3000" autocapitalize="off" autocomplete="off" inputmode="url"></label>
+      <label class="muted small">PIN (if you set one) <input id="serverPin" type="password" inputmode="numeric"></label>
+      <p id="serverMsg" class="muted small"></p>
+      <button class="primary">Connect</button>
     </form>
   </dialog>
 

@@ -1,0 +1,63 @@
+name: Build DJ Co-Pilot Android app
+
+on:
+  push:
+    paths:
+      - 'copilot/**'
+      - '.github/workflows/copilot-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: copilot-android
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: copilot/app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install
+        run: npm ci
+
+      - name: Copy web app into Android project
+        run: npm run build:web && npx cap sync android
+
+      - name: Build APK
+        working-directory: copilot/app/android
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
+      - name: Name the APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/DJ-CoPilot.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DJ-CoPilot-apk
+          path: DJ-CoPilot.apk
+
+      - name: Publish download link (GitHub release "copilot-android")
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete copilot-android --yes --cleanup-tag || true
+          gh release create copilot-android DJ-CoPilot.apk \
+            --target "${{ github.sha }}" \
+            --prerelease \
+            --title "DJ Co-Pilot for Android (build ${{ github.run_number }})" \
+            --notes "Open this page on your Android phone, tap DJ-CoPilot.apk to download, then open it to install. Built from ${{ github.ref_name }} @ ${GITHUB_SHA::7}."

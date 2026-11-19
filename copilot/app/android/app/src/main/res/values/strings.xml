@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DJ Co-Pilot</string>
+    <string name="title_activity_main">DJ Co-Pilot</string>
+    <string name="package_name">com.djrickduncan.copilot</string>
+    <string name="custom_url_scheme">com.djrickduncan.copilot</string>
+</resources>

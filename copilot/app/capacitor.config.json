@@ -1,0 +1,12 @@
+{
+  "appId": "com.djrickduncan.copilot",
+  "appName": "DJ Co-Pilot",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "android": {
+    "backgroundColor": "#0b0b10"
+  }
+}

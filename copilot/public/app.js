@@ -1,5 +1,9 @@
 // DJ Co-Pilot dashboard
 const $ = (id) => document.getElementById(id);
+// Inside the Android app the dashboard talks to the co-pilot server on your computer.
+const NATIVE = Boolean(window.Capacitor?.isNativePlatform?.());
+const Plugins = window.Capacitor?.Plugins || {};
+let base = (localStorageGet('copilot.server') || '').replace(/\/+$/, '');
 let pin = localStorageGet('copilot.pin') || '';
 let state = null;
 
@@ -8,7 +12,7 @@ function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch { /* 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 async function api(path, body, method = body ? 'POST' : 'GET') {
-  const res = await fetch(`/api/${path}`, {
+  const res = await fetch(`${base}/api/${path}`, {
     method,
     headers: { 'content-type': 'application/json', 'x-pin': pin },
     body: body ? JSON.stringify(body) : undefined,
@@ -83,9 +87,10 @@ $('postList').addEventListener('click', async (e) => {
   const t = e.target.closest('[data-copy]');
   if (!t) return;
   try {
-    await navigator.clipboard.writeText(t.dataset.copy);
+    await copyText(t.dataset.copy);
     t.textContent = 'Copied ✓';
     li.classList.add('posted');
+    if (NATIVE && $('jumpToggle').checked) setTimeout(openLive, 250);
   } catch {
     t.textContent = 'Copy failed';
   }
@@ -209,8 +214,8 @@ $('profileForm').addEventListener('submit', async (e) => {
 // ---------- live updates ----------
 let ws;
 function connectWs() {
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}/ws?pin=${encodeURIComponent(pin)}`);
+  const wsBase = base ? base.replace(/^http/, 'ws') : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+  ws = new WebSocket(`${wsBase}/ws?pin=${encodeURIComponent(pin)}`);
   ws.onmessage = (m) => {
     const { type, payload } = JSON.parse(m.data);
     if (type === 'status') { state.session.status = payload.status; renderStatus(payload.status, payload.detail); }
@@ -224,7 +229,8 @@ function connectWs() {
     if (type === 'transcript') $('micLine').textContent = `🎙️ “${payload.text}”`;
     if (type === 'report') { $('reportText').textContent = payload.summary; $('reportDlg').showModal(); }
   };
-  ws.onclose = (e) => { if (e.code === 4001) askPin(); else setTimeout(connectWs, 2000); };
+  const me = ws;
+  ws.onclose = (e) => { if (e.code === 4001) askPin(); else if (me === ws) setTimeout(connectWs, 2000); };
 }
 
 function applyState(s) {
@@ -242,6 +248,7 @@ function applyState(s) {
 }
 
 async function boot() {
+  if (NATIVE && !base) return showServerDialog();
   const s = await api('state');
   applyState(s);
   fillProfile(s.profile);
@@ -254,13 +261,67 @@ async function boot() {
   ].filter(Boolean).join(' · ');
   connectWs();
 }
-boot().catch(() => {});
+boot().catch(() => { if (NATIVE) showServerDialog("Couldn't reach the co-pilot on your computer. Check the address and that it's running."); });
 
 function setLiveLink(u) {
   const name = String(u || $('username').value || '').replace(/^@/, '');
   $('openLive').href = name ? `https://www.tiktok.com/@${encodeURIComponent(name)}/live` : '#';
 }
 $('username').addEventListener('input', () => setLiveLink());
+
+async function copyText(text) {
+  if (Plugins.Clipboard) return Plugins.Clipboard.write({ string: text });
+  return navigator.clipboard.writeText(text);
+}
+
+// In the app, leaving for TikTok opens the TikTok app on the live.
+function openLive() {
+  const href = $('openLive').href;
+  if (!href || href.endsWith('#')) return;
+  if (NATIVE) location.href = href;
+  else window.open(href, '_blank', 'noopener');
+}
+$('openLive').addEventListener('click', (e) => { e.preventDefault(); openLive(); });
+
+// ---------- app: connect to the computer ----------
+function showServerDialog(msg = '') {
+  $('serverAddr').value = base.replace(/^http:\/\//, '');
+  $('serverPin').value = pin;
+  $('serverMsg').textContent = msg;
+  if (!$('serverDlg').open) $('serverDlg').showModal();
+}
+$('serverForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  let addr = $('serverAddr').value.trim().replace(/\/+$/, '');
+  if (!addr) return;
+  if (!/^https?:\/\//.test(addr)) addr = `http://${addr}`;
+  if (!/:\d+$/.test(addr.replace(/^https?:\/\//, '')) && addr.startsWith('http://')) addr += ':3000';
+  const tryPin = $('serverPin').value.trim();
+  $('serverMsg').textContent = 'Connecting…';
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(`${addr}/api/state`, { headers: { 'x-pin': tryPin }, signal: ctrl.signal });
+    if (res.status === 401) throw new Error('Wrong PIN');
+    if (!res.ok) throw new Error(`Server said ${res.status}`);
+    base = addr;
+    pin = tryPin;
+    localStorageSet('copilot.server', base);
+    localStorageSet('copilot.pin', pin);
+    $('serverDlg').close();
+    try { ws?.close(); } catch { /* not open */ }
+    boot();
+  } catch (err) {
+    $('serverMsg').textContent = `Couldn't connect: ${err.name === 'AbortError' ? 'no answer (same Wi-Fi? co-pilot running?)' : err.message}`;
+  }
+});
+$('changeServer').addEventListener('click', () => showServerDialog());
+if (NATIVE) {
+  $('appOnly').classList.remove('hidden');
+  $('jumpToggle').checked = localStorageGet('copilot.jump') !== '0';
+  $('jumpToggle').addEventListener('change', (e) => localStorageSet('copilot.jump', e.target.checked ? '1' : '0'));
+  Plugins.KeepAwake?.keepAwake().catch(() => {});
+}
 
 // Keep the phone screen awake while the dashboard is open.
 let wakeLock = null;

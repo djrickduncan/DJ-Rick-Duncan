@@ -1,6 +1,7 @@
 // DJ Co-Pilot server. Run on a laptop/PC (or a cloud host) while you stream from the TikTok app.
 import http from 'node:http';
 import path from 'node:path';
+import os from 'node:os';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -131,6 +132,21 @@ async function finishStream() {
 const app = express();
 app.use(express.json({ limit: '256kb' }));
 
+// The Android app loads the dashboard from inside the app (origin http://localhost),
+// so allow just those origins to call the API. The PIN still protects it.
+const APP_ORIGINS = new Set(['http://localhost', 'https://localhost', 'capacitor://localhost']);
+app.use('/api', (req, res, next) => {
+  const origin = req.get('origin');
+  if (origin && APP_ORIGINS.has(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+    res.set('Vary', 'Origin');
+    res.set('Access-Control-Allow-Headers', 'content-type, x-pin');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 app.use('/api', (req, res, next) => {
   if (!PIN || req.get('x-pin') === PIN) return next();
   res.status(401).json({ error: 'Wrong PIN' });
@@ -218,7 +234,8 @@ wss.on('connection', (ws, req) => {
 
 server.listen(PORT, () => {
   console.log(`\n🎧 DJ Co-Pilot running`);
-  console.log(`   Phone dashboard:  http://<this-computer's-IP>:${PORT}   (same Wi-Fi)`);
+  const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address);
+  console.log(`   Phone app → enter: ${ips.length ? ips.map((ip) => `${ip}:${PORT}`).join('  or  ') : `<this computer's IP>:${PORT}`}   (same Wi-Fi)`);
   console.log(`   Listener (open on THIS computer): http://localhost:${PORT}/listen.html`);
   console.log(`   Claude suggestions: ${brain.enabled ? 'ON' : 'OFF (set ANTHROPIC_API_KEY; using simple templates)'}`);
   if (process.env.DEMO === '1') console.log('   DEMO MODE: fake viewers, nothing connects to TikTok');
