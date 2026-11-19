@@ -1,6 +1,6 @@
 // Turns the Listener's audio features into "moments" worth reacting to:
 // piano break, vocals coming in, breakdown, drop, tempo/genre change, crowd noise.
-import { EventEmitter } from 'node:events';
+import { Emitter } from './emitter.js';
 
 const INSTRUMENTS = {
   piano: { label: 'Piano', emoji: '🎹', on: 0.3, off: 0.12 },
@@ -12,7 +12,7 @@ const INSTRUMENTS = {
 };
 const COOLDOWN_MS = 45000;
 
-export class MusicTracker extends EventEmitter {
+export class MusicTracker extends Emitter {
   constructor() {
     super();
     this.state = null; // latest features

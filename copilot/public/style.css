@@ -130,3 +130,4 @@ select { font: inherit; color: var(--text); background: #0f0f15; border: 1px sol
 .toggle { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
 .toggle input { width: 18px; height: 18px; }
 .viewer label { display: grid; gap: 4px; }
+.profile label.toggle { display: flex; }

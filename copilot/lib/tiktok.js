@@ -1,13 +1,15 @@
 // Read-only connection to a TikTok LIVE. It needs only the username: no login,
 // no password, and it cannot post, like, tap or share anything.
-import { EventEmitter } from 'node:events';
+import { Emitter } from './emitter.js';
 import { TikTokLiveConnection, WebcastEvent, ControlEvent } from 'tiktok-live-connector';
 
 const userOf = (d) => ({ uniqueId: d?.user?.uniqueId || '', nickname: d?.user?.nickname || d?.user?.uniqueId || '' });
 
-export class LiveSource extends EventEmitter {
-  constructor() {
+export class LiveSource extends Emitter {
+  constructor({ signApiKey = '' } = {}) {
     super();
+    this.signApiKey = signApiKey;
+    this.canPost = false;
     this.conn = null;
     this.username = '';
     this.retryTimer = null;
@@ -19,7 +21,6 @@ export class LiveSource extends EventEmitter {
     this.username = String(username || '').replace(/^@/, '').trim();
     if (!this.username) throw new Error('No TikTok username set');
     this.wantConnected = true;
-    if (process.env.DEMO === '1') return this.startDemo();
     this._open();
   }
 
@@ -28,7 +29,7 @@ export class LiveSource extends EventEmitter {
     this.emit('status', 'connecting', `Looking for @${this.username}'s live…`);
     const conn = new TikTokLiveConnection(this.username, {
       enableExtendedGiftInfo: true,
-      ...(process.env.TIKTOK_SIGN_API_KEY ? { signApiKey: process.env.TIKTOK_SIGN_API_KEY } : {}),
+      ...(this.signApiKey ? { signApiKey: this.signApiKey } : {}),
     });
     this.conn = conn;
 
@@ -74,39 +75,11 @@ export class LiveSource extends EventEmitter {
   async disconnect() {
     this.wantConnected = false;
     clearTimeout(this.retryTimer);
-    clearInterval(this.demoTimer);
     if (this.conn) {
       const c = this.conn;
       this.conn = null;
       c.removeAllListeners?.();
       try { await c.disconnect(); } catch { /* already closed */ }
     }
-  }
-
-  // ---------- demo mode: fake events so you can try the dashboard without going live ----------
-  startDemo() {
-    const people = [
-      ['sarah_k', 'Sarah K'], ['dazzaleeds', 'Dazza'], ['raverjen90', 'Jen'], ['mikeyb', 'Mikey B'],
-      ['garagegaz', 'Gaz'], ['lou.from.hull', 'Louise'], ['tommo_88', 'Tommo'], ['bex_dances', 'Bex'],
-    ];
-    const lines = [
-      'evening rick!!', 'this takes me back 😭', 'can you play some garage?', 'tuning in from Leeds',
-      'first time here, loving it', 'where are you playing next?', 'TUNE 🔥🔥', 'my mum used to play this in the car',
-      'what year was this?', 'shout out to Sheffield!',
-    ];
-    const pick = (a) => a[Math.floor(Math.random() * a.length)];
-    let viewers = 3;
-    this.emit('status', 'live', `DEMO MODE: pretending @${this.username} is live`);
-    this.demoTimer = setInterval(() => {
-      const [uniqueId, nickname] = pick(people);
-      const r = Math.random();
-      if (r < 0.25) { viewers += 1; this.emit('event', { type: 'join', uniqueId, nickname }); }
-      else if (r < 0.7) this.emit('event', { type: 'chat', uniqueId, nickname, text: pick(lines) });
-      else if (r < 0.78) this.emit('event', { type: 'follow', uniqueId, nickname });
-      else if (r < 0.84) this.emit('event', { type: 'share', uniqueId, nickname });
-      else if (r < 0.9) this.emit('event', { type: 'gift', uniqueId, nickname, detail: pick(['Rose', '5x Rose', 'Finger Heart', 'Galaxy']) });
-      else this.emit('event', { type: 'like', uniqueId, nickname, count: 15, total: 0 });
-      this.emit('viewers', viewers);
-    }, 4000 + Math.random() * 3000);
   }
 }

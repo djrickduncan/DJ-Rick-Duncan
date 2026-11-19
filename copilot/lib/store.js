@@ -1,31 +1,15 @@
 // Live session state + long-term viewer memory (who your regulars are).
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(here, '..', 'data');
-const VIEWERS_FILE = path.join(DATA_DIR, 'viewers.json');
-const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
-const PROFILE_EXAMPLE = path.join(DATA_DIR, 'profile.example.json');
-const REPORTS_DIR = path.join(DATA_DIR, 'reports');
-
+// Runs on the computer (saving to files) and inside the phone app (saving to phone storage):
+// the `persist` object passed in decides where things are saved.
 const FEED_LIMIT = 300;
 const TRANSCRIPT_WINDOW_MS = 3 * 60 * 1000;
 
-function readJson(file, fallback) {
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch {
-    return fallback;
-  }
-}
-
 export class Store {
-  constructor() {
-    fs.mkdirSync(REPORTS_DIR, { recursive: true });
-    this.viewers = readJson(VIEWERS_FILE, {}); // uniqueId -> long-term record
-    this.profile = readJson(PROFILE_FILE, null) ?? readJson(PROFILE_EXAMPLE, {});
+  constructor(persist, { remember = true } = {}) {
+    this.persist = persist;
+    this.remember = remember; // false in demo mode: pretend viewers aren't saved
+    this.viewers = persist.loadViewers() || {}; // uniqueId -> long-term record
+    this.profile = persist.loadProfile() || {};
     this._saveTimer = null;
     this.resetSession();
   }
@@ -116,10 +100,10 @@ export class Store {
   }
 
   scheduleSave() {
-    if (this._saveTimer || process.env.DEMO === '1') return; // demo viewers aren't real, don't remember them
+    if (this._saveTimer || !this.remember) return;
     this._saveTimer = setTimeout(() => {
       this._saveTimer = null;
-      fs.writeFileSync(VIEWERS_FILE, JSON.stringify(this.viewers, null, 1));
+      this.persist.saveViewers(this.viewers);
     }, 2000);
   }
 
@@ -159,13 +143,11 @@ export class Store {
 
   saveProfile(profile) {
     this.profile = profile;
-    fs.writeFileSync(PROFILE_FILE, JSON.stringify(profile, null, 2));
+    this.persist.saveProfile(profile);
   }
 
   saveReport(report) {
-    const name = `report-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-    fs.writeFileSync(path.join(REPORTS_DIR, name), JSON.stringify(report, null, 2));
-    return name;
+    return this.persist.saveReport(report);
   }
 
   snapshot() {

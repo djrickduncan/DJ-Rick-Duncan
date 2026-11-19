@@ -1,9 +1,9 @@
-// DJ Co-Pilot dashboard
+// DJ Co-Pilot dashboard.
+// In the Android app the whole co-pilot runs on the phone (see app/src/backend.js).
+// In a normal browser it talks to the computer version (server.js).
 const $ = (id) => document.getElementById(id);
-// Inside the Android app the dashboard talks to the co-pilot server on your computer.
 const NATIVE = Boolean(window.Capacitor?.isNativePlatform?.());
-const Plugins = window.Capacitor?.Plugins || {};
-let base = (localStorageGet('copilot.server') || '').replace(/\/+$/, '');
+let backend = null; // set in the app
 let pin = localStorageGet('copilot.pin') || '';
 let state = null;
 
@@ -12,13 +12,15 @@ function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch { /* 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 async function api(path, body, method = body ? 'POST' : 'GET') {
-  const res = await fetch(`${base}/api/${path}`, {
+  if (backend) return backend.request(method, path, body);
+  const res = await fetch(`api/${path}`, {
     method,
     headers: { 'content-type': 'application/json', 'x-pin': pin },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (res.status === 401) { askPin(); throw new Error('PIN required'); }
-  return res.json();
+  const json = await res.json();
+  return res.ok ? json : { ...json, _status: res.status };
 }
 
 function askPin() {
@@ -47,18 +49,24 @@ function renderCounts() {
 }
 
 const MAX_POSTS = 12;
-let postSeq = 0;
+const canPost = () => Boolean(state?.features?.canPost);
+function emptyPosts() {
+  $('postList').innerHTML = `<li class="empty">Chat posts appear here as people join, chat and the music moves. ${canPost() ? 'Tap <b>Post</b> to send one to the live chat.' : 'Tap Copy, then paste it into the live chat.'}</li>`;
+}
+
 function renderSuggestions(s) {
   if (!s) return;
-  // Chat posts stack up newest-first, so nothing is lost while you're pasting.
+  // Chat posts stack up newest-first, so nothing is lost while you're busy.
   const list = $('postList');
   if (s.chat_posts?.length) {
     list.querySelector('.empty')?.remove();
     const html = s.chat_posts
-      .map((p) => `<li class="${s.source !== 'claude' ? 'quick' : ''}" data-id="${++postSeq}">
+      .map((p) => `<li class="${s.source !== 'claude' ? 'quick' : ''}">
         <div class="txt">${esc(p.text)}</div>
-        <div class="meta"><span>${esc(p.why)}${s.source !== 'claude' ? ' · instant' : ''}</span>
-        <div><button class="x" data-dismiss>✕</button><button class="copy" data-copy="${esc(p.text)}">Copy</button></div></div></li>`)
+        <div class="meta"><span class="why">${esc(p.why)}${s.source !== 'claude' ? ' · instant' : ''}</span>
+        <div><button class="x" data-dismiss aria-label="Dismiss">✕</button>${canPost()
+          ? `<button class="x" data-copy="${esc(p.text)}">Copy</button><button class="copy" data-post="${esc(p.text)}">Post</button>`
+          : `<button class="copy" data-copy="${esc(p.text)}">Copy</button>`}</div></div></li>`)
       .join('');
     list.insertAdjacentHTML('afterbegin', html);
     while (list.children.length > MAX_POSTS) list.lastElementChild.remove();
@@ -84,13 +92,27 @@ function renderSuggestions(s) {
 $('postList').addEventListener('click', async (e) => {
   const li = e.target.closest('li');
   if (e.target.matches('[data-dismiss]')) return li.remove();
+  const postBtn = e.target.closest('[data-post]');
+  if (postBtn) {
+    postBtn.disabled = true;
+    postBtn.textContent = 'Posting…';
+    const r = await api('post', { text: postBtn.dataset.post }).catch((err) => ({ error: err.message }));
+    if (r?.error) {
+      postBtn.disabled = false;
+      postBtn.textContent = 'Retry';
+      li.querySelector('.why').textContent = `⚠️ ${r.error}`;
+    } else {
+      postBtn.textContent = 'Posted ✓';
+      li.classList.add('posted');
+    }
+    return;
+  }
   const t = e.target.closest('[data-copy]');
   if (!t) return;
   try {
-    await copyText(t.dataset.copy);
+    await (backend ? backend.copy(t.dataset.copy) : navigator.clipboard.writeText(t.dataset.copy));
     t.textContent = 'Copied ✓';
-    li.classList.add('posted');
-    if (NATIVE && $('jumpToggle').checked) setTimeout(openLive, 250);
+    if (!canPost()) li.classList.add('posted');
   } catch {
     t.textContent = 'Copy failed';
   }
@@ -98,7 +120,7 @@ $('postList').addEventListener('click', async (e) => {
 
 function renderMusic(m) {
   const st = m?.state, sum = m?.summary;
-  $('listenerState').textContent = sum ? 'Listening 🎧' : 'Listener not running';
+  $('listenerState').textContent = sum ? 'Listening 🎧' : NATIVE ? 'Not listening' : 'Listener not running';
   if (!st || !sum) return;
   $('mBpm').textContent = st.bpm || '–';
   $('mEnergy').textContent = sum.section === 'breakdown' ? 'breakdown' : sum.energy;
@@ -140,7 +162,7 @@ function renderRoom(list) {
 function renderNowPlaying(np, history = []) {
   $('nowPlaying').textContent = np
     ? `▶ ${np.artist ? np.artist + ' – ' : ''}${np.title}${np.year ? ` (${np.year})` : ''}${history.length > 1 ? ` · ${history.length} tracks so far` : ''}`
-    : 'Set the track so your co-pilot can talk about it.';
+    : '';
 }
 
 function fillProfile(p) {
@@ -211,23 +233,40 @@ $('profileForm').addEventListener('submit', async (e) => {
   e.target.closest('details').open = false;
 });
 
+function setLiveLink(u) {
+  const name = String(u || $('username').value || '').replace(/^@/, '');
+  $('openLive').href = name ? `https://www.tiktok.com/@${encodeURIComponent(name)}/live` : '#';
+}
+$('username').addEventListener('input', () => setLiveLink());
+$('openLive').addEventListener('click', (e) => {
+  e.preventDefault();
+  if (backend?.tiktok) return backend.tiktok.show();
+  if (!$('openLive').href.endsWith('#')) window.open($('openLive').href, '_blank', 'noopener');
+});
+
 // ---------- live updates ----------
+function onMessage(type, payload) {
+  if (type === 'status') { state.session.status = payload.status; renderStatus(payload.status, payload.detail); }
+  if (type === 'viewers') { state.session.viewerCount = payload.viewerCount; renderCounts(); }
+  if (type === 'feed') { if (payload.type === 'chat') state.session.counts.chats += 1; addFeed(payload); renderCounts(); }
+  if (type === 'room') renderRoom(payload);
+  if (type === 'suggestions') renderSuggestions(payload);
+  if (type === 'nowPlaying') renderNowPlaying(payload.nowPlaying, payload.trackHistory);
+  if (type === 'reset') applyState({ ...payload, features: state?.features, music: state?.music });
+  if (type === 'music') renderMusic(payload);
+  if (type === 'transcript') $('micLine').textContent = `🎙️ “${payload.text}”`;
+  if (type === 'speechPartial') $('micLine').textContent = `🎙️ “${payload.text}…”`;
+  if (type === 'speechError') $('micLine').textContent = `🎙️ ${payload.error}`;
+  if (type === 'report') { $('reportText').textContent = payload.summary; $('reportDlg').showModal(); }
+  if (type === 'sourceInfo') onSourceInfo(payload);
+}
+
 let ws;
 function connectWs() {
-  const wsBase = base ? base.replace(/^http/, 'ws') : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
-  ws = new WebSocket(`${wsBase}/ws?pin=${encodeURIComponent(pin)}`);
+  ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?pin=${encodeURIComponent(pin)}`);
   ws.onmessage = (m) => {
     const { type, payload } = JSON.parse(m.data);
-    if (type === 'status') { state.session.status = payload.status; renderStatus(payload.status, payload.detail); }
-    if (type === 'viewers') { state.session.viewerCount = payload.viewerCount; renderCounts(); }
-    if (type === 'feed') { if (payload.type === 'chat') state.session.counts.chats += 1; addFeed(payload); renderCounts(); }
-    if (type === 'room') renderRoom(payload);
-    if (type === 'suggestions') renderSuggestions(payload);
-    if (type === 'nowPlaying') renderNowPlaying(payload.nowPlaying, payload.trackHistory);
-    if (type === 'reset') applyState(payload);
-    if (type === 'music') renderMusic(payload);
-    if (type === 'transcript') $('micLine').textContent = `🎙️ “${payload.text}”`;
-    if (type === 'report') { $('reportText').textContent = payload.summary; $('reportDlg').showModal(); }
+    onMessage(type, payload);
   };
   const me = ws;
   ws.onclose = (e) => { if (e.code === 4001) askPin(); else if (me === ws) setTimeout(connectWs, 2000); };
@@ -241,92 +280,132 @@ function applyState(s) {
   s.feed.forEach(addFeed);
   renderRoom(s.inRoom);
   renderNowPlaying(s.nowPlaying, s.trackHistory);
-  $('postList').innerHTML = '';
+  emptyPosts();
   if (s.suggestions?.chat_posts?.length || s.suggestions?.say_now?.length) renderSuggestions(s.suggestions);
-  else $('postList').innerHTML = '<li class="empty">Chat posts appear here as people join, chat and the music moves. Tap Copy, then paste into the live chat.</li>';
   if (s.music) renderMusic(s.music);
 }
 
 async function boot() {
-  if (NATIVE && !base) return showServerDialog();
+  if (NATIVE && !backend) {
+    const mod = await import('./native/backend.js');
+    backend = await mod.createNativeBackend();
+    setupApp(backend);
+  }
   const s = await api('state');
   applyState(s);
   fillProfile(s.profile);
   const f = s.features;
   $('features').textContent = [
-    f.listener ? '' : 'Open /listen.html on the streaming computer to hear the music',
-    f.claude ? 'AI suggestions on' : 'AI off: add ANTHROPIC_API_KEY for smart suggestions',
+    f.listener || NATIVE ? '' : 'Open /listen.html on the streaming computer to hear the music',
+    f.claude ? 'AI suggestions on' : NATIVE ? 'AI off: add your Claude API key in App settings' : 'AI off: add ANTHROPIC_API_KEY for smart suggestions',
     f.demo ? 'DEMO MODE' : '',
     f.brainError ? `Last AI error: ${f.brainError}` : '',
   ].filter(Boolean).join(' · ');
-  connectWs();
+  if (backend) backend.subscribe(onMessage);
+  else connectWs();
 }
-boot().catch(() => { if (NATIVE) showServerDialog("Couldn't reach the co-pilot on your computer. Check the address and that it's running."); });
-
-function setLiveLink(u) {
-  const name = String(u || $('username').value || '').replace(/^@/, '');
-  $('openLive').href = name ? `https://www.tiktok.com/@${encodeURIComponent(name)}/live` : '#';
-}
-$('username').addEventListener('input', () => setLiveLink());
-
-async function copyText(text) {
-  if (Plugins.Clipboard) return Plugins.Clipboard.write({ string: text });
-  return navigator.clipboard.writeText(text);
-}
-
-// In the app, leaving for TikTok opens the TikTok app on the live.
-function openLive() {
-  const href = $('openLive').href;
-  if (!href || href.endsWith('#')) return;
-  if (NATIVE) location.href = href;
-  else window.open(href, '_blank', 'noopener');
-}
-$('openLive').addEventListener('click', (e) => { e.preventDefault(); openLive(); });
-
-// ---------- app: connect to the computer ----------
-function showServerDialog(msg = '') {
-  $('serverAddr').value = base.replace(/^http:\/\//, '');
-  $('serverPin').value = pin;
-  $('serverMsg').textContent = msg;
-  if (!$('serverDlg').open) $('serverDlg').showModal();
-}
-$('serverForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  let addr = $('serverAddr').value.trim().replace(/\/+$/, '');
-  if (!addr) return;
-  if (!/^https?:\/\//.test(addr)) addr = `http://${addr}`;
-  if (!/:\d+$/.test(addr.replace(/^https?:\/\//, '')) && addr.startsWith('http://')) addr += ':3000';
-  const tryPin = $('serverPin').value.trim();
-  $('serverMsg').textContent = 'Connecting…';
-  try {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 6000);
-    const res = await fetch(`${addr}/api/state`, { headers: { 'x-pin': tryPin }, signal: ctrl.signal });
-    if (res.status === 401) throw new Error('Wrong PIN');
-    if (!res.ok) throw new Error(`Server said ${res.status}`);
-    base = addr;
-    pin = tryPin;
-    localStorageSet('copilot.server', base);
-    localStorageSet('copilot.pin', pin);
-    $('serverDlg').close();
-    try { ws?.close(); } catch { /* not open */ }
-    boot();
-  } catch (err) {
-    $('serverMsg').textContent = `Couldn't connect: ${err.name === 'AbortError' ? 'no answer (same Wi-Fi? co-pilot running?)' : err.message}`;
-  }
+boot().catch((err) => {
+  console.error(err);
+  $('features').textContent = `Couldn't start: ${err.message}`;
 });
-$('changeServer').addEventListener('click', () => showServerDialog());
-if (NATIVE) {
-  $('appOnly').classList.remove('hidden');
-  $('jumpToggle').checked = localStorageGet('copilot.jump') !== '0';
-  $('jumpToggle').addEventListener('change', (e) => localStorageSet('copilot.jump', e.target.checked ? '1' : '0'));
-  Plugins.KeepAwake?.keepAwake().catch(() => {});
+
+// ---------- phone app only ----------
+function onSourceInfo(info) {
+  if (info.type === 'state') {
+    const bits = [];
+    bits.push(info.loggedIn ? '✅ Logged in' : '🔑 Not logged in: tap Log in to TikTok');
+    if (info.isLivePage) bits.push(info.input ? '✅ Chat box found' : '⚠️ Chat box not found');
+    $('tiktokState').textContent = bits.join(' · ');
+  }
+  if (info.type === 'calibrated') {
+    $('appMsg').textContent = info.editable ? '✅ Got it, the chat box is saved.' : '⚠️ That didn\'t look like a text box. Try again and tap right where you type.';
+  }
+  if (info.type === 'debug') {
+    const text = JSON.stringify(info.data, null, 1);
+    backend.copy(text).catch(() => {});
+    $('reportText').textContent = `Debug info (copied to clipboard, so you can paste it to whoever is fixing the app):\n\n${text}`;
+    $('reportDlg').showModal();
+  }
 }
 
-// Keep the phone screen awake while the dashboard is open.
+function setupApp(b) {
+  document.body.classList.add('native');
+  for (const id of ['appBar', 'appListen', 'appSettingsCard']) $(id).classList.remove('hidden');
+  $('listenLink').classList.add('hidden');
+
+  const s = b.settings;
+  $('setKey').value = s.apiKey || '';
+  $('setEffort').value = s.effort || 'high';
+  $('setDemo').checked = Boolean(s.demo);
+  $('appSettings').addEventListener('submit', (e) => {
+    e.preventDefault();
+    b.saveSettings({ apiKey: $('setKey').value.trim(), effort: $('setEffort').value, demo: $('setDemo').checked });
+  });
+
+  const tt = b.tiktok;
+  const needTikTok = (fn) => async () => {
+    if (!tt) { $('appMsg').textContent = 'Turn off demo mode in App settings to use TikTok.'; return; }
+    try { await fn(); } catch (err) { $('appMsg').textContent = err.message; }
+  };
+  $('loginBtn').addEventListener('click', needTikTok(() => tt.login()));
+  $('showBtn').addEventListener('click', needTikTok(() => tt.show()));
+  $('teachBtn').addEventListener('click', needTikTok(async () => {
+    $('appMsg').textContent = 'Tap the chat box on the TikTok page…';
+    await tt.calibrate();
+  }));
+  $('logoutBtn').addEventListener('click', needTikTok(async () => { await tt.logout(); $('appMsg').textContent = 'Logged out of TikTok.'; }));
+  $('debugBtn').addEventListener('click', needTikTok(() => tt.debug()));
+  $('reportsBtn').addEventListener('click', () => {
+    const list = b.reports().slice().reverse();
+    $('reportText').textContent = list.length
+      ? list.map((r) => `${new Date(r.at).toLocaleString()}\n${r.summary}`).join('\n\n———\n\n')
+      : 'No stream reports yet.';
+    $('reportDlg').showModal();
+  });
+
+  $('listenBtn').addEventListener('click', async () => {
+    const btn = $('listenBtn');
+    if (b.listening) {
+      b.stopListening();
+      btn.textContent = '🎧 Start listening';
+      btn.classList.remove('on');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '🎧 Loading…';
+    try {
+      await b.startListening();
+      btn.textContent = '🎧 Listening (tap to stop)';
+      btn.classList.add('on');
+    } catch (err) {
+      btn.textContent = '🎧 Start listening';
+      $('micLine').textContent = `Couldn't listen: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  $('voiceBtn').addEventListener('click', async () => {
+    const btn = $('voiceBtn');
+    if (b.speechOn) {
+      await b.stopSpeech();
+      btn.textContent = '🎙️ Hear my voice';
+      btn.classList.remove('on');
+      return;
+    }
+    try {
+      await b.startSpeech();
+      btn.textContent = '🎙️ Hearing you (tap to stop)';
+      btn.classList.add('on');
+    } catch (err) {
+      $('micLine').textContent = `🎙️ ${err.message}`;
+    }
+  });
+}
+
+// Keep the screen awake in a normal browser too (the app does this natively).
 let wakeLock = null;
 async function keepAwake() {
-  try { if ('wakeLock' in navigator && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); } catch { /* not allowed */ }
+  try { if (!NATIVE && 'wakeLock' in navigator && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); } catch { /* not allowed */ }
 }
 document.addEventListener('visibilitychange', keepAwake);
 document.addEventListener('click', () => { if (!wakeLock) keepAwake(); }, { once: true });

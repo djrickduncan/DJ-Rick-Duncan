@@ -1,13 +1,13 @@
 // The co-pilot "brain": turns what's happening on stream (chat, viewers, the music,
 // what Rick says) into chat posts for the crew account and lines for Rick to say.
-// It never posts anything to TikTok itself: a person copies and posts each message.
-import Anthropic from '@anthropic-ai/sdk';
-
-const MODEL = process.env.CLAUDE_MODEL || 'claude-opus-5-5';
-// Rich, natural replies by default. Set CLAUDE_EFFORT=low or medium for faster ones.
-const EFFORT = process.env.CLAUDE_EFFORT || 'high';
-const MIN_GAP_MS = Number(process.env.SUGGEST_MIN_GAP_MS || 12000);
-const QUIET_MS = Number(process.env.QUIET_CHAT_MS || 75000);
+// It never posts anything by itself: a person approves every message.
+// Runs on the computer and inside the phone app; the Claude client is passed in.
+const DEFAULTS = {
+  model: 'claude-opus-5-5',
+  effort: 'high', // rich, natural replies; 'medium'/'low' are quicker
+  minGapMs: 12000,
+  quietMs: 75000,
+};
 
 const SUGGESTION_SCHEMA = {
   type: 'object',
@@ -68,8 +68,8 @@ const SUGGESTION_SCHEMA = {
 function systemPrompt(profile) {
   const crew = profile.crewAccount ? `@${profile.crewAccount.replace(/^@/, '')}` : "Rick's crew account";
   return `You are the live engagement co-pilot for ${profile.djName || 'a DJ'}'s TikTok LIVE DJ sets.
-The DJ streams from a computer. Their team runs ${crew} on a phone: an openly-labelled crew/hype account for the stream, like a host or MC in the chat.
-You write chat posts that a person on the phone copies and posts from ${crew}, plus occasional lines the DJ can say on the mic.
+The DJ streams from a computer. ${crew} is an openly-labelled crew/hype account for the stream, like a host or MC in the chat, run from a phone.
+You write chat posts that a person reviews and posts from ${crew} with one tap, plus occasional lines the DJ can say on the mic.
 
 About the DJ: ${profile.about || ''}
 Genres: ${(profile.genres || []).join(', ')}
@@ -98,11 +98,12 @@ Fewer, better posts beat filler. If the latest suggestions already cover the mom
 }
 
 export class Brain {
-  constructor(store, music, onSuggestions) {
+  constructor(store, music, onSuggestions, options = {}) {
     this.store = store;
     this.music = music;
     this.onSuggestions = onSuggestions;
-    this.client = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN ? new Anthropic() : null;
+    this.client = null; // an Anthropic client, or null to use built-in templates
+    this.configure(options);
     this.pending = []; // moments worth reacting to since last call
     this.inflight = false;
     this.lastRunAt = 0;
@@ -112,8 +113,20 @@ export class Brain {
     this.timer = setInterval(() => this.tick(), 2000);
   }
 
+  configure({ client, model, effort, minGapMs, quietMs } = {}) {
+    if (client !== undefined) this.client = client;
+    this.model = model || this.model || DEFAULTS.model;
+    this.effort = effort || this.effort || DEFAULTS.effort;
+    this.minGapMs = Number(minGapMs) || this.minGapMs || DEFAULTS.minGapMs;
+    this.quietMs = Number(quietMs) || this.quietMs || DEFAULTS.quietMs;
+  }
+
   get enabled() {
     return Boolean(this.client);
+  }
+
+  stop() {
+    clearInterval(this.timer);
   }
 
   note(moment) {
@@ -133,7 +146,7 @@ export class Brain {
     if (this.inflight) return;
     const now = Date.now();
     const s = this.store.session;
-    const quiet = s.status === 'live' && now - s.lastChatAt > QUIET_MS && now - this.lastQuietNudgeAt > QUIET_MS;
+    const quiet = s.status === 'live' && now - s.lastChatAt > this.quietMs && now - this.lastQuietNudgeAt > this.quietMs;
     if (quiet) {
       this.lastQuietNudgeAt = now;
       this.note({ kind: 'quiet_chat', text: `No chat for ${Math.round((now - s.lastChatAt) / 1000)}s` });
@@ -142,7 +155,7 @@ export class Brain {
     const meaningful = this.pending.filter((p) => p.kind !== 'dj_spoke');
     if (!meaningful.length && !(this.pending.length && now - this.lastRunAt > 30000)) return;
     const urgent = this.pending.some((p) => p.urgent);
-    if (!urgent && now - this.lastRunAt < MIN_GAP_MS) return;
+    if (!urgent && now - this.lastRunAt < this.minGapMs) return;
 
     const moments = this.pending.splice(0);
     this.lastRunAt = now;
@@ -203,11 +216,11 @@ export class Brain {
   async callClaude(moments) {
     const ctx = this.buildContext(moments);
     const response = await this.client.beta.messages.create({
-      model: MODEL,
+      model: this.model,
       max_tokens: 8000,
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
-      output_config: { effort: EFFORT, format: { type: 'json_schema', schema: SUGGESTION_SCHEMA } },
+      output_config: { effort: this.effort, format: { type: 'json_schema', schema: SUGGESTION_SCHEMA } },
       system: systemPrompt(this.store.profile),
       messages: [
         {
@@ -243,7 +256,7 @@ export class Brain {
     let response;
     try {
       response = await this.client.beta.messages.create({
-      model: MODEL,
+      model: this.model,
       max_tokens: 6000,
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',

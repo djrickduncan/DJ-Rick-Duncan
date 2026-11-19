@@ -10,13 +10,16 @@
     "apk": "npm run sync && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.10.0",
     "@capacitor-community/keep-awake": "8.0.1",
+    "@capacitor-community/speech-recognition": "7.0.1",
     "@capacitor/android": "8.6.0",
     "@capacitor/clipboard": "8.0.1",
     "@capacitor/core": "8.6.0",
     "@mediapipe/tasks-audio": "1.2.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "8.6.0"
+    "@capacitor/cli": "8.6.0",
+    "esbuild": "0.28.2"
   }
 }
